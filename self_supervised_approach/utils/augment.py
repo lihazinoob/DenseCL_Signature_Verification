@@ -135,6 +135,23 @@ class AugmentConfig:
     # DenseCL's actual matching mechanism than the whole-image geometric
     # transforms are.
 
+    raw_resolution_cap: int = 1000     # max side length (px) of the raw image entering augment_view
+    # `_affine_padding`/`_elastic_padding` pad proportionally to the raw
+    # image's own diagonal, so an unusually large or elongated raw scan
+    # (e.g. BHSig260's wide-short signatures, ~435x1329) can blow up into
+    # a multi-megapixel working canvas (verified: 435x1329 pads out to
+    # 1417x2311 for elastic_warp) - several float32 buffers of that size
+    # per sample is what caused real MemoryErrors in DataLoader workers on
+    # a 16GB-RAM machine once num_workers>0 let several such samples be
+    # in flight at once. Downscaling the raw image first (preserving
+    # aspect ratio) shrinks the padded canvas proportionally, since the
+    # padding formula is scale-invariant - verified empirically (same rng
+    # seed, capped vs uncapped) that this does NOT reintroduce the earlier
+    # ink-clipping bug: ink stayed well clear of the padded canvas edge in
+    # both cases, and final ink pixel counts stayed in the same range.
+    # 1000px keeps ~4x oversampling headroom over the final 256px output -
+    # a signature's stroke content is nowhere near that resolution-limited.
+
 
 DEFAULT_CONFIG = AugmentConfig()
 
@@ -230,6 +247,23 @@ def cutout_strokes(image: np.ndarray, rng: np.random.Generator, config: AugmentC
         out[chosen_y0:chosen_y0 + size, chosen_x0:chosen_x0 + size] = PAPER
 
     return out
+
+
+def cap_raw_resolution(image: np.ndarray, config: AugmentConfig = DEFAULT_CONFIG) -> np.ndarray:
+    """Downscale `image` (preserving aspect ratio) if its longer side
+    exceeds `config.raw_resolution_cap`; otherwise return it unchanged.
+
+    Must run BEFORE any padding/warp step (see `raw_resolution_cap`'s
+    docstring for why) - `augment_view` calls this first, before
+    `random_cutout`.
+    """
+    h, w = image.shape
+    longest = max(h, w)
+    if longest <= config.raw_resolution_cap:
+        return image
+    scale = config.raw_resolution_cap / longest
+    new_w, new_h = max(1, round(w * scale)), max(1, round(h * scale))
+    return cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
 
 
 def random_cutout(image: np.ndarray, rng: np.random.Generator, config: AugmentConfig = DEFAULT_CONFIG) -> np.ndarray:
@@ -359,14 +393,17 @@ def augment_view(image: np.ndarray, rng: np.random.Generator, config: AugmentCon
     Cutout runs FIRST, before any geometric warp, so the erased patch
     itself gets naturally rotated/warped along with everything else
     rather than appearing as an axis-aligned rectangle stamped onto an
-    already-warped image.
+    already-warped image. The raw-resolution cap runs even before that,
+    since it must shrink the image before any padding step multiplies its
+    size (see `AugmentConfig.raw_resolution_cap`).
 
     Deliberately does NOT include noise (see `add_boundary_noise` for
     why) or re-threshold internally (see `add_boundary_noise`'s docstring
     for how repeated re-thresholding erased small features like a
     diacritic dot in an earlier version of this pipeline).
     """
-    out = random_cutout(image, rng, config)
+    out = cap_raw_resolution(image, config)
+    out = random_cutout(out, rng, config)
     out = random_affine(out, rng, config)
     out = elastic_warp(out, rng, config)
     out = random_morphology(out, rng, config)
