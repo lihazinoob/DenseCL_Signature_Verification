@@ -1,0 +1,5 @@
+.venv/
+analysis/
+data/
+tools/
+self_supervised_approach/results/
