@@ -1,0 +1,2067 @@
+7.4s 1 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+7.4s 2 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+7.4s 3 0.00s - to python to disable frozen modules.
+7.4s 4 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+8.0s 5 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+8.0s 6 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+8.0s 7 0.00s - to python to disable frozen modules.
+8.0s 8 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+19.0s 9 Torch version : 2.10.0+cu128
+19.0s 10 CUDA available: True
+19.0s 11 GPU count     : 2
+19.0s 12 GPU 0: Tesla T4
+19.0s 13 GPU 1: Tesla T4
+19.0s 14 Mon Aug 31 14:08:39 2026
+19.0s 15 +-----------------------------------------------------------------------------------------+
+19.0s 16 | NVIDIA-SMI 580.159.04             Driver Version: 580.159.04     CUDA Version: 13.0     |
+19.0s 17 +-----------------------------------------+------------------------+----------------------+
+19.0s 18 | GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+19.0s 19 | Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+19.0s 20 |                                         |                        |               MIG M. |
+19.0s 21 |=========================================+========================+======================|
+19.0s 22 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
+19.0s 23 | N/A   49C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
+19.0s 24 |                                         |                        |                  N/A |
+19.0s 25 +-----------------------------------------+------------------------+----------------------+
+19.0s 26 |   1  Tesla T4                       Off |   00000000:00:05.0 Off |                    0 |
+19.0s 27 | N/A   48C    P8              9W /   70W |       3MiB /  15360MiB |      0%      Default |
+19.0s 28 |                                         |                        |                  N/A |
+19.0s 29 +-----------------------------------------+------------------------+----------------------+
+19.0s 30 
+19.0s 31 +-----------------------------------------------------------------------------------------+
+19.0s 32 | Processes:                                                                              |
+19.0s 33 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+19.0s 34 |        ID   ID                                                               Usage      |
+19.0s 35 |=========================================================================================|
+19.0s 36 |  No running processes found                                                             |
+19.0s 37 +-----------------------------------------------------------------------------------------+
+19.5s 38 Writing /kaggle/working/densecl_src/kaggle_config.py
+19.5s 39 Wrote /kaggle/working/densecl_src/data/test_set_writer_split/CEDAR_test_writers.json (15 test writers)
+19.5s 40 Wrote /kaggle/working/densecl_src/data/test_set_writer_split/BHSig260_Bengali_test_writers.json (30 test writers)
+19.5s 41 Wrote /kaggle/working/densecl_src/data/test_set_writer_split/BHSig260_Hindi_test_writers.json (30 test writers)
+19.5s 42 Wrote /kaggle/working/densecl_src/data/validation_set_writer_split/CEDAR_validation_writers.json (5 validation writers)
+19.5s 43 Wrote /kaggle/working/densecl_src/data/validation_set_writer_split/BHSig260_Bengali_validation_writers.json (10 validation writers)
+19.5s 44 Wrote /kaggle/working/densecl_src/data/validation_set_writer_split/BHSig260_Hindi_validation_writers.json (15 validation writers)
+19.5s 45 Wrote /kaggle/working/densecl_src/data/validation_set_writer_split/Mendeley_validation_writers.json (20 validation writers)
+19.5s 46 Writing /kaggle/working/densecl_src/preprocess.py
+19.6s 47 Writing /kaggle/working/densecl_src/mask.py
+19.6s 48 Writing /kaggle/working/densecl_src/augment.py
+19.6s 49 Writing /kaggle/working/densecl_src/test_set_creation.py
+19.6s 50 Writing /kaggle/working/densecl_src/validation_set_creation.py
+19.7s 51 Writing /kaggle/working/densecl_src/dataset.py
+19.7s 52 Writing /kaggle/working/densecl_src/encoder.py
+19.7s 53 Writing /kaggle/working/densecl_src/momentum.py
+19.7s 54 Writing /kaggle/working/densecl_src/heads.py
+19.7s 55 Writing /kaggle/working/densecl_src/memory_queue.py
+19.8s 56 Writing /kaggle/working/densecl_src/losses.py
+19.8s 57 Writing /kaggle/working/densecl_src/lr_scheduler.py
+19.8s 58 Writing /kaggle/working/densecl_src/train.py
+19.9s 59 [kaggle_config] Fixed dataset naming: linked 'Medeley' -> 'Mendeley'
+27.3s 60 Restored previous session's results from /kaggle/input/datasets/naveedlihazi/signature-verification-dense-cl-approach/densecl_pretrain_v1 -> /kaggle/working/results/training/densecl_pretrain_v1
+33.0s 61 Found existing checkpoint for 'densecl_pretrain_v1': train_state_epoch11.pt - resuming.
+37.3s 62 [SignatureSSLDataset] BHSig260_Bengali: excluded 40 writer(s) (test and/or validation)
+37.3s 63 [SignatureSSLDataset] BHSig260_Hindi: excluded 45 writer(s) (test and/or validation)
+37.3s 64 [SignatureSSLDataset] CEDAR: excluded 20 writer(s) (test and/or validation)
+37.3s 65 [SignatureSSLDataset] Mendeley: excluded 20 writer(s) (test and/or validation)
+37.5s 66 Run             : densecl_pretrain_v1
+37.5s 67 Device          : cuda
+37.5s 68 Dataset         : 21330 train / 2190 validation (writer-level, fixed split)
+37.5s 69 Epochs          : 50 (starting at epoch 12)
+37.5s 70 Steps per epoch : 2666
+37.5s 71 Warmup steps    : 13330
+37.5s 72 Total steps     : 133300
+37.5s 73 Batch size      : 8
+37.5s 74 Learning rate   : 0.00094 (base 0.03 scaled for batch 8)
+37.5s 75 Queue size      : 4096
+37.5s 76 Encoder momentum: 0.999
+37.5s 77 ============================================================
+2693.3s 78 [Epoch 12] train_total=7.4022  validation_total=7.9191
+2693.5s 79 [Checkpoint] Saved train_state_epoch12.pt and encoder_epoch12.pt
+5326.2s 80 [Epoch 13] train_total=7.4123  validation_total=7.9343
+5326.4s 81 [Checkpoint] Saved train_state_epoch13.pt and encoder_epoch13.pt
+7971.5s 82 [Epoch 14] train_total=7.4032  validation_total=7.9573
+7971.8s 83 [Checkpoint] Saved train_state_epoch14.pt and encoder_epoch14.pt
+10413.2s 84 Exception ignored in:
+10413.2s 85 Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+10413.2s 86 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+10413.2s 87 
+10413.2s 88 
+10413.2s 89 Exception ignored in:
+10413.2s 90 Exception ignored in: Traceback (most recent call last):
+10413.2s 91 
+10413.2s 92 Traceback (most recent call last):
+10413.2s 93 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+10413.2s 94 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>  File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+10413.2s 95 
+10413.2s 96 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+10413.2s 97 
+10413.2s 98 self._shutdown_workers()
+10413.2s 99 self._shutdown_workers()
+10413.2s 100 
+10413.3s 101 
+10413.3s 102 
+10413.3s 103 
+10413.3s 104 
+10413.3s 105 Traceback (most recent call last):
+10413.3s 106 
+10413.3s 107 Traceback (most recent call last):
+10413.3s 108 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+10413.3s 109 
+10413.3s 110 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+10413.3s 111 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+10413.3s 112 
+10413.3s 113 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+10413.3s 114 
+10413.3s 115 if w.is_alive():
+10413.3s 116 if w.is_alive():
+10413.3s 117 
+10413.3s 118 
+10413.3s 119 
+10413.3s 120 self._shutdown_workers()
+10413.3s 121 self._shutdown_workers()
+10413.3s 122 
+10413.3s 123 
+10413.3s 124 
+10413.3s 125 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+10413.3s 126 
+10413.3s 127 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+10413.3s 128 
+10413.3s 129 
+10413.3s 130 if w.is_alive():
+10413.3s 131 if w.is_alive():
+10413.3s 132 
+10413.3s 133 
+10413.3s 134 
+10413.3s 135 
+10413.3s 136 
+10413.3s 137 
+10413.3s 138 
+10413.3s 139 
+10413.3s 140 
+10413.3s 141 
+10413.3s 142 
+10413.3s 143 ^
+10413.3s 144 ^
+10413.3s 145 
+10413.3s 146 ^
+10413.3s 147 ^
+10413.3s 148 ^
+10413.3s 149 ^^
+10413.4s 150 ^^
+10413.4s 151 ^^
+10413.4s 152 ^^
+10413.4s 153 ^^
+10413.4s 154 ^^
+10413.4s 155 ^^
+10413.4s 156 ^^
+10413.4s 157 ^^
+10413.4s 158 ^^
+10413.4s 159 ^^
+10413.4s 160 ^^
+10413.4s 161 ^^
+10413.4s 162 ^^
+10413.4s 163 ^^
+10413.4s 164 ^^
+10413.4s 165 ^
+10413.4s 166 
+10413.4s 167 
+10413.4s 168 ^
+10413.5s 169 ^  File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+10413.5s 170 
+10413.5s 171 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+10413.5s 172 
+10413.5s 173 ^
+10413.5s 174 ^^
+10413.5s 175 ^assert self._parent_pid == os.getpid(), 'can only test a child process'
+10413.5s 176 assert self._parent_pid == os.getpid(), 'can only test a child process'
+10413.5s 177 
+10413.5s 178 
+10413.5s 179 ^
+10413.5s 180 ^
+10413.5s 181 
+10413.5s 182 ^
+10413.5s 183 ^
+10413.5s 184 
+10413.5s 185 
+10413.5s 186 
+10413.5s 187 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+10413.5s 188 
+10413.5s 189 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+10413.5s 190 
+10413.5s 191 assert self._parent_pid == os.getpid(), 'can only test a child process'
+10413.5s 192 assert self._parent_pid == os.getpid(), 'can only test a child process'
+10413.5s 193 
+10413.5s 194 
+10413.5s 195 
+10413.5s 196 
+10413.5s 197 
+10413.5s 198 
+10413.5s 199 
+10413.5s 200 
+10413.5s 201 
+10413.5s 202 
+10413.5s 203 
+10413.5s 204 
+10413.5s 205 
+10413.5s 206 
+10413.6s 207 
+10413.6s 208 
+10413.6s 209 
+10413.6s 210 
+10413.6s 211 
+10413.6s 212 ^
+10413.6s 213 ^^
+10413.6s 214 ^
+10413.6s 215 ^
+10413.6s 216 ^
+10413.6s 217 ^
+10413.6s 218 ^^
+10413.6s 219 ^^
+10413.6s 220 ^^
+10413.6s 221 ^^
+10413.6s 222 ^^
+10413.6s 223 ^^
+10413.6s 224 ^^
+10413.6s 225 ^^
+10413.6s 226 ^^
+10413.6s 227 ^^
+10413.6s 228 ^^
+10413.6s 229 ^^
+10413.7s 230 ^^
+10413.7s 231 ^^
+10413.7s 232 ^^
+10413.7s 233 ^^
+10413.7s 234 ^^
+10413.7s 235 ^^
+10413.7s 236 ^^
+10413.7s 237 ^^
+10413.7s 238 ^^
+10413.7s 239 ^^
+10413.7s 240 ^^
+10413.7s 241 ^^
+10413.7s 242 ^^
+10413.7s 243 ^^
+10413.7s 244 ^^
+10413.7s 245 ^^
+10413.7s 246 ^^
+10413.8s 247 ^^
+10413.8s 248 ^^
+10413.8s 249 ^^
+10413.8s 250 ^^
+10413.8s 251 ^^
+10413.8s 252 ^^
+10413.8s 253 ^^
+10413.8s 254 ^^
+10413.8s 255 ^^
+10413.8s 256 ^^
+10413.8s 257 ^^
+10413.8s 258 ^^
+10413.8s 259 ^^
+10413.8s 260 ^^
+10413.8s 261 ^^
+10413.8s 262 ^^
+10413.8s 263 ^^
+10413.8s 264 ^^
+10413.9s 265 ^^
+10413.9s 266 ^^
+10413.9s 267 ^^
+10413.9s 268 ^^
+10413.9s 269 ^
+10413.9s 270 
+10413.9s 271 
+10413.9s 272 ^
+10413.9s 273 ^AssertionError
+10413.9s 274 AssertionError:
+10413.9s 275 : ^
+10413.9s 276 ^^
+10413.9s 277 ^^
+10413.9s 278 ^can only test a child process
+10413.9s 279 can only test a child process
+10413.9s 280 
+10413.9s 281 
+10413.9s 282 ^
+10413.9s 283 ^^
+10414.0s 284 ^^
+10414.0s 285 ^
+10414.0s 286 
+10414.0s 287 
+10414.0s 288 AssertionError
+10414.0s 289 AssertionError:
+10414.0s 290 : can only test a child process
+10414.0s 291 can only test a child process
+10414.0s 292 
+10414.0s 293 
+10641.0s 294 [Epoch 15] train_total=7.4043  validation_total=7.9119
+10641.2s 295 [Checkpoint] Saved train_state_epoch15.pt and encoder_epoch15.pt
+13312.5s 296 [Epoch 16] train_total=7.4094  validation_total=7.9383
+13312.7s 297 [Checkpoint] Saved train_state_epoch16.pt and encoder_epoch16.pt
+15909.5s 298 [Epoch 17] train_total=7.4113  validation_total=7.9567
+15929.8s 299 [Checkpoint] Saved train_state_epoch17.pt and encoder_epoch17.pt
+18513.6s 300 [Epoch 18] train_total=7.4135  validation_total=7.9725
+18513.9s 301 [Checkpoint] Saved train_state_epoch18.pt and encoder_epoch18.pt
+18514.1s 302 Exception ignored in:
+18514.1s 303 Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+18514.1s 304 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+18514.1s 305 
+18514.1s 306 
+18514.1s 307 Exception ignored in:
+18514.2s 308 Exception ignored in: Traceback (most recent call last):
+18514.2s 309 
+18514.2s 310 Traceback (most recent call last):
+18514.2s 311 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+18514.2s 312 
+18514.2s 313 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+18514.2s 314 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+18514.2s 315 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+18514.2s 316 
+18514.2s 317 
+18514.2s 318 
+18514.2s 319 Traceback (most recent call last):
+18514.2s 320 
+18514.2s 321 Traceback (most recent call last):
+18514.2s 322 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+18514.2s 323 
+18514.2s 324 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+18514.2s 325 self._shutdown_workers()
+18514.2s 326 self._shutdown_workers()
+18514.2s 327 
+18514.2s 328 
+18514.2s 329 
+18514.2s 330 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+18514.2s 331 
+18514.2s 332 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+18514.2s 333 self._shutdown_workers()
+18514.2s 334 self._shutdown_workers()
+18514.2s 335 
+18514.2s 336 
+18514.2s 337 
+18514.2s 338 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+18514.2s 339 
+18514.2s 340 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+18514.2s 341 if w.is_alive():
+18514.2s 342 if w.is_alive():
+18514.2s 343 
+18514.2s 344 
+18514.2s 345 
+18514.2s 346 if w.is_alive():
+18514.2s 347 if w.is_alive():
+18514.2s 348 
+18514.2s 349 
+18514.2s 350 
+18514.2s 351 
+18514.2s 352 
+18514.2s 353 
+18514.2s 354 
+18514.2s 355 
+18514.2s 356 
+18514.2s 357 
+18514.2s 358 
+18514.2s 359 
+18514.2s 360 
+18514.2s 361 ^
+18514.2s 362 ^
+18514.2s 363 ^
+18514.2s 364 ^
+18514.3s 365 ^
+18514.3s 366 ^
+18514.3s 367 ^
+18514.3s 368 ^^
+18514.3s 369 ^^
+18514.3s 370 ^^
+18514.3s 371 ^^
+18514.3s 372 ^^
+18514.3s 373 ^^
+18514.3s 374 ^^
+18514.3s 375 ^^
+18514.3s 376 ^^
+18514.3s 377 ^^
+18514.3s 378 ^^
+18514.3s 379 ^^
+18514.3s 380 ^^
+18514.3s 381 ^^
+18514.3s 382 ^^
+18514.3s 383 ^^
+18514.3s 384 ^^
+18514.3s 385 ^
+18514.3s 386 
+18514.3s 387 
+18514.3s 388 ^
+18514.3s 389 ^  File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+18514.3s 390 
+18514.3s 391 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+18514.3s 392 ^
+18514.3s 393 ^
+18514.3s 394 ^
+18514.3s 395 ^assert self._parent_pid == os.getpid(), 'can only test a child process'
+18514.3s 396 assert self._parent_pid == os.getpid(), 'can only test a child process'
+18514.3s 397 
+18514.3s 398 
+18514.3s 399 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+18514.3s 400 
+18514.3s 401 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+18514.3s 402 
+18514.3s 403 
+18514.3s 404 
+18514.3s 405 
+18514.3s 406 
+18514.3s 407 
+18514.3s 408 assert self._parent_pid == os.getpid(), 'can only test a child process'
+18514.3s 409 assert self._parent_pid == os.getpid(), 'can only test a child process'
+18514.3s 410 
+18514.3s 411 
+18514.3s 412 
+18514.4s 413 
+18514.4s 414 
+18514.4s 415 
+18514.4s 416 
+18514.4s 417 
+18514.4s 418 
+18514.4s 419 
+18514.4s 420 
+18514.4s 421 
+18514.4s 422 
+18514.4s 423 
+18514.4s 424 
+18514.4s 425 
+18514.4s 426 
+18514.4s 427 
+18514.4s 428 
+18514.4s 429 
+18514.4s 430 
+18514.4s 431 
+18514.4s 432 ^
+18514.4s 433 ^^
+18514.4s 434 ^^
+18514.4s 435 ^^
+18514.4s 436 ^^
+18514.4s 437 ^^
+18514.4s 438 ^^
+18514.4s 439 ^^
+18514.4s 440 ^^
+18514.4s 441 ^^
+18514.4s 442 ^^
+18514.4s 443 ^^
+18514.4s 444 ^^
+18514.4s 445 ^^
+18514.4s 446 ^^
+18514.4s 447 ^^
+18514.4s 448 ^^
+18514.4s 449 ^^
+18514.4s 450 ^^
+18514.4s 451 ^^
+18514.5s 452 ^^
+18514.5s 453 ^^
+18514.5s 454 ^^
+18514.5s 455 ^^
+18514.5s 456 ^^
+18514.5s 457 ^^
+18514.5s 458 ^^
+18514.5s 459 ^^
+18514.5s 460 ^^
+18514.5s 461 ^^
+18514.5s 462 ^^
+18514.5s 463 ^^
+18514.5s 464 ^^
+18514.5s 465 ^^
+18514.5s 466 ^^
+18514.5s 467 ^^
+18514.5s 468 ^^
+18514.5s 469 ^^
+18514.5s 470 ^^
+18514.5s 471 ^^
+18514.5s 472 ^^
+18514.5s 473 ^^
+18514.5s 474 ^^
+18514.5s 475 ^^
+18514.5s 476 ^^
+18514.5s 477 ^^
+18514.5s 478 ^^
+18514.5s 479 ^^
+18514.6s 480 ^^
+18514.6s 481 ^^
+18514.6s 482 ^^
+18514.6s 483 ^^
+18514.6s 484 ^^
+18514.6s 485 ^^
+18514.6s 486 ^^
+18514.6s 487 ^^
+18514.6s 488 ^
+18514.6s 489 
+18514.6s 490 
+18514.6s 491 ^
+18514.6s 492 ^AssertionError
+18514.6s 493 AssertionError^
+18514.6s 494 ^^
+18514.6s 495 ^^
+18514.6s 496 ^:
+18514.6s 497 : ^
+18514.6s 498 ^can only test a child process
+18514.6s 499 can only test a child process^
+18514.6s 500 ^
+18514.6s 501 
+18514.6s 502 
+18514.6s 503 
+18514.6s 504 
+18514.6s 505 
+18514.6s 506 Exception ignored in:
+18514.6s 507 Exception ignored in: AssertionError
+18514.6s 508 AssertionError<function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+18514.6s 509 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+18514.6s 510 
+18514.6s 511 
+18514.6s 512 :
+18514.6s 513 : can only test a child process
+18514.6s 514 can only test a child processTraceback (most recent call last):
+18514.6s 515 
+18514.6s 516 Traceback (most recent call last):
+18514.6s 517 
+18514.6s 518 
+18514.6s 519 
+18514.6s 520 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+18514.6s 521 
+18514.6s 522 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+18514.6s 523 
+18514.6s 524 self._shutdown_workers()
+18514.6s 525 self._shutdown_workers()Exception ignored in:
+18514.7s 526 Exception ignored in:
+18514.7s 527 
+18514.7s 528 
+18514.7s 529 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+18514.7s 530 
+18514.7s 531 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+18514.7s 532 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+18514.7s 533 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+18514.7s 534 
+18514.7s 535 
+18514.7s 536 
+18514.7s 537 if w.is_alive():
+18514.7s 538 if w.is_alive():Traceback (most recent call last):
+18514.7s 539 
+18514.7s 540 Traceback (most recent call last):
+18514.7s 541 
+18514.7s 542 
+18514.7s 543 
+18514.7s 544 
+18514.7s 545 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+18514.7s 546 
+18514.7s 547 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+18514.7s 548 
+18514.7s 549 
+18514.7s 550 
+18514.7s 551 self._shutdown_workers()
+18514.7s 552 self._shutdown_workers()
+18514.7s 553 
+18514.7s 554 
+18514.7s 555 
+18514.7s 556 
+18514.7s 557 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+18514.7s 558 
+18514.7s 559 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+18514.7s 560 
+18514.7s 561 
+18514.7s 562 
+18514.7s 563 if w.is_alive():
+18514.7s 564 if w.is_alive():^
+18514.7s 565 ^^
+18514.7s 566 ^
+18514.7s 567 
+18514.7s 568 
+18514.7s 569 ^
+18514.7s 570 ^
+18514.7s 571 ^
+18514.7s 572 ^^
+18514.7s 573 ^
+18514.7s 574 
+18514.7s 575 ^
+18514.7s 576 ^^
+18514.7s 577 ^
+18514.8s 578 ^
+18514.8s 579 ^
+18514.8s 580 ^
+18514.8s 581 ^^
+18514.8s 582 ^
+18514.8s 583 ^
+18514.8s 584 ^
+18514.8s 585 ^
+18514.8s 586 ^
+18514.8s 587 
+18514.8s 588 
+18514.8s 589 ^
+18514.8s 590 ^^
+18514.8s 591 ^  File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+18514.8s 592 
+18514.8s 593 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+18514.8s 594 ^
+18514.8s 595 ^
+18514.8s 596 ^
+18514.8s 597 ^assert self._parent_pid == os.getpid(), 'can only test a child process'
+18514.8s 598 assert self._parent_pid == os.getpid(), 'can only test a child process'^
+18514.8s 599 ^
+18514.8s 600 
+18514.8s 601 
+18514.8s 602 ^
+18514.8s 603 ^
+18514.8s 604 ^
+18514.8s 605 ^^
+18514.8s 606 ^
+18514.8s 607 ^
+18514.8s 608 ^^
+18514.8s 609 ^
+18514.8s 610 
+18514.8s 611 ^
+18514.8s 612 ^^
+18514.8s 613 ^
+18514.8s 614 
+18514.8s 615 
+18514.8s 616 
+18514.8s 617 
+18514.8s 618 
+18514.8s 619 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+18514.8s 620 
+18514.9s 621 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+18514.9s 622 
+18514.9s 623 
+18514.9s 624 assert self._parent_pid == os.getpid(), 'can only test a child process'
+18514.9s 625 assert self._parent_pid == os.getpid(), 'can only test a child process'
+18514.9s 626 
+18514.9s 627 
+18514.9s 628 
+18514.9s 629 
+18514.9s 630 
+18514.9s 631 
+18514.9s 632 
+18514.9s 633 ^
+18514.9s 634 ^
+18514.9s 635 ^
+18514.9s 636 ^^
+18514.9s 637 ^^
+18514.9s 638 ^
+18514.9s 639 ^
+18514.9s 640 ^
+18514.9s 641 ^
+18514.9s 642 ^
+18514.9s 643 
+18514.9s 644 ^
+18514.9s 645 ^
+18514.9s 646 ^
+18514.9s 647 ^
+18514.9s 648 
+18514.9s 649 ^
+18514.9s 650 ^^
+18514.9s 651 ^
+18514.9s 652 ^
+18514.9s 653 ^^
+18514.9s 654 ^^
+18515.0s 655 ^^
+18515.0s 656 ^^
+18515.0s 657 ^^
+18515.0s 658 ^^
+18515.0s 659 ^^
+18515.0s 660 ^^
+18515.0s 661 ^^
+18515.0s 662 ^^
+18515.0s 663 ^^
+18515.0s 664 ^^
+18515.0s 665 ^^
+18515.0s 666 ^^
+18515.0s 667 ^^
+18515.0s 668 ^^
+18515.0s 669 ^^
+18515.0s 670 ^^
+18515.0s 671 ^^
+18515.0s 672 ^^
+18515.0s 673 ^^
+18515.0s 674 ^^
+18515.0s 675 ^^
+18515.0s 676 ^^
+18515.0s 677 ^^
+18515.0s 678 ^^
+18515.0s 679 ^^
+18515.0s 680 ^^
+18515.0s 681 ^^
+18515.0s 682 ^^
+18515.0s 683 ^^
+18515.0s 684 ^^
+18515.0s 685 ^^
+18515.0s 686 ^^
+18515.0s 687 ^^
+18515.0s 688 ^^
+18515.1s 689 ^^
+18515.1s 690 ^^
+18515.1s 691 ^
+18515.1s 692 
+18515.1s 693 
+18515.1s 694 AssertionError
+18515.1s 695 AssertionError^
+18515.1s 696 ^:
+18515.1s 697 : ^
+18515.1s 698 ^can only test a child process
+18515.1s 699 can only test a child process
+18515.1s 700 
+18515.1s 701 
+18515.1s 702 ^
+18515.1s 703 ^^
+18515.1s 704 ^^
+18515.1s 705 ^^
+18515.1s 706 ^^
+18515.1s 707 ^^
+18515.1s 708 ^^
+18515.1s 709 ^^
+18515.1s 710 ^^
+18515.1s 711 ^^
+18515.1s 712 ^^
+18515.2s 713 ^
+18515.2s 714 
+18515.2s 715 
+18515.2s 716 AssertionError
+18515.2s 717 AssertionError:
+18515.2s 718 : can only test a child process
+18515.2s 719 can only test a child process
+18515.2s 720 
+18515.2s 721 
+21178.0s 722 [Epoch 19] train_total=7.4048  validation_total=7.9301
+21178.3s 723 [Checkpoint] Saved train_state_epoch19.pt and encoder_epoch19.pt
+21217.8s 724 Exception ignored in:
+21217.8s 725 Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+21217.8s 726 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+21217.8s 727 
+21217.8s 728 
+21217.9s 729 Traceback (most recent call last):
+21217.9s 730 
+21217.9s 731 Traceback (most recent call last):
+21217.9s 732 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+21217.9s 733 
+21217.9s 734 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+21217.9s 735 
+21217.9s 736 self._shutdown_workers()
+21217.9s 737 self._shutdown_workers()
+21217.9s 738 
+21217.9s 739 
+21217.9s 740 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+21217.9s 741 
+21217.9s 742 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+21217.9s 743 
+21217.9s 744 if w.is_alive():
+21217.9s 745 if w.is_alive():
+21217.9s 746 
+21217.9s 747 
+21217.9s 748 
+21217.9s 749 
+21217.9s 750 
+21217.9s 751 
+21217.9s 752 
+21217.9s 753 
+21217.9s 754 
+21217.9s 755 ^
+21217.9s 756 ^^
+21217.9s 757 ^^
+21217.9s 758 ^^
+21217.9s 759 ^^
+21217.9s 760 ^^
+21217.9s 761 ^^
+21217.9s 762 ^^
+21217.9s 763 ^^
+21217.9s 764 ^^
+21217.9s 765 ^^
+21218.0s 766 ^^
+21218.0s 767 ^
+21218.0s 768 
+21218.0s 769 
+21218.0s 770 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+21218.0s 771 
+21218.0s 772 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+21218.0s 773 
+21218.0s 774 assert self._parent_pid == os.getpid(), 'can only test a child process'
+21218.0s 775 assert self._parent_pid == os.getpid(), 'can only test a child process'
+21218.0s 776 
+21218.0s 777 
+21218.0s 778 
+21218.0s 779 
+21218.0s 780 
+21218.0s 781 
+21218.0s 782 
+21218.0s 783 
+21218.0s 784 
+21218.0s 785 
+21218.0s 786 
+21218.0s 787 
+21218.0s 788 
+21218.0s 789 ^
+21218.0s 790 ^^
+21218.0s 791 ^^
+21218.0s 792 ^^
+21218.0s 793 ^^
+21218.0s 794 ^^
+21218.0s 795 ^^
+21218.0s 796 ^^
+21218.0s 797 ^^
+21218.0s 798 ^^
+21218.0s 799 ^^
+21218.0s 800 ^^
+21218.0s 801 ^^
+21218.0s 802 ^^
+21218.0s 803 ^^
+21218.0s 804 ^^
+21218.0s 805 ^^
+21218.0s 806 ^^
+21218.0s 807 ^^
+21218.0s 808 ^^
+21218.0s 809 ^^
+21218.0s 810 ^^
+21218.1s 811 ^^
+21218.1s 812 ^^
+21218.1s 813 ^^
+21218.1s 814 ^^
+21218.1s 815 ^^
+21218.1s 816 ^^
+21218.1s 817 ^^
+21218.1s 818 ^^
+21218.1s 819 ^^
+21218.1s 820 ^
+21218.1s 821 
+21218.1s 822 
+21218.1s 823 AssertionError
+21218.1s 824 AssertionError:
+21218.1s 825 : can only test a child process
+21218.1s 826 can only test a child process
+21218.1s 827 
+21218.1s 828 
+21219.6s 829 Exception ignored in:
+21219.6s 830 Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+21219.6s 831 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+21219.6s 832 
+21219.6s 833 
+21219.6s 834 Traceback (most recent call last):
+21219.6s 835 
+21219.6s 836 Traceback (most recent call last):
+21219.6s 837 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+21219.6s 838 
+21219.6s 839 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+21219.6s 840 
+21219.6s 841 self._shutdown_workers()
+21219.6s 842 self._shutdown_workers()
+21219.6s 843 
+21219.6s 844 
+21219.6s 845 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+21219.6s 846 
+21219.6s 847 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+21219.6s 848 
+21219.7s 849 if w.is_alive():
+21219.7s 850 if w.is_alive():
+21219.7s 851 
+21219.7s 852 
+21219.7s 853 
+21219.7s 854 
+21219.7s 855 
+21219.7s 856 
+21219.7s 857 
+21219.7s 858 
+21219.7s 859 
+21219.7s 860 ^
+21219.7s 861 ^^
+21219.7s 862 ^^
+21219.7s 863 ^^
+21219.7s 864 ^^
+21219.8s 865 ^^
+21219.8s 866 ^^
+21219.8s 867 ^^
+21219.8s 868 ^^
+21219.8s 869 ^^
+21219.8s 870 ^^
+21219.8s 871 ^^
+21219.8s 872 ^
+21219.8s 873 
+21219.8s 874 
+21219.8s 875 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+21219.8s 876 
+21219.8s 877 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+21219.8s 878 
+21219.8s 879 assert self._parent_pid == os.getpid(), 'can only test a child process'
+21219.8s 880 assert self._parent_pid == os.getpid(), 'can only test a child process'
+21219.8s 881 
+21219.8s 882 
+21219.8s 883 
+21219.8s 884 
+21219.8s 885 
+21219.8s 886 
+21219.9s 887 
+21219.9s 888 
+21219.9s 889 
+21219.9s 890 
+21219.9s 891 
+21219.9s 892 
+21219.9s 893 
+21219.9s 894 ^
+21219.9s 895 ^^
+21219.9s 896 ^^
+21219.9s 897 ^^
+21219.9s 898 ^^
+21219.9s 899 ^^
+21219.9s 900 ^^
+21219.9s 901 ^^
+21219.9s 902 ^^
+21219.9s 903 ^^
+21220.0s 904 ^^
+21220.0s 905 ^^
+21220.0s 906 ^^
+21220.0s 907 ^^
+21220.0s 908 ^^
+21220.0s 909 ^^
+21220.0s 910 ^^
+21220.0s 911 ^^
+21220.0s 912 ^^
+21220.0s 913 ^^
+21220.0s 914 ^^
+21220.0s 915 ^^
+21220.0s 916 ^^
+21220.0s 917 ^^
+21220.0s 918 ^^
+21220.0s 919 ^^
+21220.0s 920 ^^
+21220.0s 921 ^^
+21220.0s 922 ^^
+21220.0s 923 ^^
+21220.1s 924 ^^
+21220.1s 925 ^
+21220.1s 926 
+21220.1s 927 
+21220.1s 928 AssertionError
+21220.1s 929 AssertionError:
+21220.1s 930 : can only test a child process
+21220.1s 931 can only test a child process
+21220.1s 932 
+21220.1s 933 
+21230.2s 934 Exception ignored in:
+21230.2s 935 Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+21230.2s 936 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+21230.2s 937 
+21230.2s 938 
+21230.2s 939 Traceback (most recent call last):
+21230.2s 940 
+21230.2s 941 Traceback (most recent call last):
+21230.2s 942 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+21230.2s 943 
+21230.2s 944 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+21230.2s 945 
+21230.2s 946 self._shutdown_workers()
+21230.2s 947 self._shutdown_workers()
+21230.2s 948 
+21230.2s 949 
+21230.2s 950 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+21230.2s 951 
+21230.2s 952 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+21230.2s 953 
+21230.2s 954 
+21230.2s 955 
+21230.2s 956 
+21230.2s 957 if w.is_alive():
+21230.2s 958 if w.is_alive():
+21230.2s 959 
+21230.2s 960 
+21230.2s 961 
+21230.2s 962 
+21230.2s 963 
+21230.2s 964 
+21230.2s 965 ^
+21230.2s 966 ^^
+21230.2s 967 ^^
+21230.2s 968 ^^
+21230.2s 969 ^^
+21230.2s 970 ^^
+21230.2s 971 ^^
+21230.2s 972 ^^
+21230.2s 973 ^^
+21230.2s 974 ^^
+21230.2s 975 ^^
+21230.2s 976 ^^
+21230.2s 977 ^
+21230.2s 978 
+21230.2s 979 
+21230.2s 980 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+21230.2s 981 
+21230.2s 982 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+21230.2s 983 
+21230.2s 984 assert self._parent_pid == os.getpid(), 'can only test a child process'
+21230.3s 985 assert self._parent_pid == os.getpid(), 'can only test a child process'
+21230.3s 986 
+21230.3s 987 
+21230.3s 988 
+21230.3s 989 
+21230.3s 990 
+21230.3s 991 
+21230.3s 992 
+21230.3s 993 
+21230.3s 994 
+21230.3s 995 
+21230.3s 996 
+21230.3s 997 
+21230.3s 998 
+21230.3s 999 ^
+21230.3s 1000 ^^
+21230.3s 1001 ^^
+21230.3s 1002 ^^
+21230.3s 1003 ^^
+21230.3s 1004 ^^
+21230.3s 1005 ^^
+21230.3s 1006 ^^
+21230.3s 1007 ^^
+21230.3s 1008 ^^
+21230.3s 1009 ^^
+21230.3s 1010 ^^
+21230.3s 1011 ^^
+21230.3s 1012 ^^
+21230.3s 1013 ^^
+21230.3s 1014 ^^
+21230.3s 1015 ^^
+21230.3s 1016 ^^
+21230.3s 1017 ^^
+21230.3s 1018 ^^
+21230.3s 1019 ^^
+21230.3s 1020 ^^
+21230.3s 1021 ^^
+21230.4s 1022 ^^
+21230.4s 1023 ^^
+21230.4s 1024 ^^
+21230.4s 1025 ^^
+21230.4s 1026 ^^
+21230.4s 1027 ^^
+21230.4s 1028 ^^
+21230.4s 1029 ^^
+21230.4s 1030 ^
+21230.4s 1031 
+21230.4s 1032 
+21230.4s 1033 AssertionError
+21230.4s 1034 AssertionError:
+21230.4s 1035 : can only test a child process
+21230.4s 1036 can only test a child process
+21230.4s 1037 
+21230.4s 1038 
+21232.8s 1039 Exception ignored in:
+21232.8s 1040 Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+21232.8s 1041 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+21232.8s 1042 
+21232.8s 1043 
+21232.8s 1044 Traceback (most recent call last):
+21232.8s 1045 
+21232.8s 1046 Traceback (most recent call last):
+21232.8s 1047 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+21232.8s 1048 
+21232.8s 1049 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+21232.8s 1050 
+21232.8s 1051 self._shutdown_workers()
+21232.8s 1052 self._shutdown_workers()
+21232.8s 1053 
+21232.8s 1054 
+21232.8s 1055 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+21232.8s 1056 
+21232.8s 1057 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+21232.8s 1058 
+21232.8s 1059 if w.is_alive():
+21232.8s 1060 if w.is_alive():
+21232.8s 1061 
+21232.8s 1062 
+21232.8s 1063 
+21232.8s 1064 
+21232.9s 1065 
+21232.9s 1066 
+21232.9s 1067 
+21232.9s 1068 
+21232.9s 1069 
+21232.9s 1070 ^
+21232.9s 1071 ^^
+21232.9s 1072 ^^
+21232.9s 1073 ^^
+21232.9s 1074 ^^
+21232.9s 1075 ^^
+21232.9s 1076 ^^
+21232.9s 1077 ^^
+21232.9s 1078 ^^
+21232.9s 1079 ^^
+21232.9s 1080 ^^
+21232.9s 1081 ^^
+21232.9s 1082 ^
+21232.9s 1083 
+21232.9s 1084 
+21232.9s 1085 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+21232.9s 1086 
+21232.9s 1087 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+21232.9s 1088 
+21232.9s 1089 assert self._parent_pid == os.getpid(), 'can only test a child process'
+21232.9s 1090 assert self._parent_pid == os.getpid(), 'can only test a child process'
+21232.9s 1091 
+21232.9s 1092 
+21232.9s 1093 
+21232.9s 1094 
+21232.9s 1095 
+21232.9s 1096 
+21232.9s 1097 
+21232.9s 1098 
+21232.9s 1099 
+21232.9s 1100 
+21232.9s 1101 
+21232.9s 1102 
+21232.9s 1103 
+21233.0s 1104 ^
+21233.0s 1105 ^^
+21233.0s 1106 ^^
+21233.0s 1107 ^^
+21233.0s 1108 ^^
+21233.0s 1109 ^^
+21233.0s 1110 ^^
+21233.0s 1111 ^^
+21233.0s 1112 ^^
+21233.0s 1113 ^^
+21233.0s 1114 ^^
+21233.0s 1115 ^^
+21233.0s 1116 ^^
+21233.0s 1117 ^^
+21233.0s 1118 ^^
+21233.0s 1119 ^^
+21233.0s 1120 ^^
+21233.0s 1121 ^^
+21233.0s 1122 ^^
+21233.0s 1123 ^^
+21233.0s 1124 ^^
+21233.0s 1125 ^^
+21233.0s 1126 ^^
+21233.0s 1127 ^^
+21233.0s 1128 ^^
+21233.0s 1129 ^^
+21233.0s 1130 ^^
+21233.0s 1131 ^^
+21233.0s 1132 ^^
+21233.0s 1133 ^^
+21233.0s 1134 ^^
+21233.0s 1135 ^
+21233.0s 1136 
+21233.0s 1137 
+21233.0s 1138 AssertionError
+21233.0s 1139 AssertionError:
+21233.1s 1140 : can only test a child process
+21233.1s 1141 can only test a child process
+21233.1s 1142 
+21233.1s 1143 
+23783.5s 1144 [Epoch 20] train_total=7.4056  validation_total=7.9557
+23783.9s 1145 [Checkpoint] Saved train_state_epoch20.pt and encoder_epoch20.pt
+23859.7s 1146 Exception ignored in:
+23859.7s 1147 Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+23859.8s 1148 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+23859.8s 1149 
+23859.8s 1150 
+23859.8s 1151 Traceback (most recent call last):
+23859.8s 1152 
+23859.8s 1153 Traceback (most recent call last):
+23859.8s 1154 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+23859.8s 1155 
+23859.8s 1156 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+23859.8s 1157 
+23859.8s 1158 self._shutdown_workers()
+23859.8s 1159 self._shutdown_workers()
+23859.8s 1160 
+23859.8s 1161 
+23859.8s 1162 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+23859.8s 1163 
+23859.8s 1164 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+23859.8s 1165 
+23859.8s 1166 if w.is_alive():
+23859.8s 1167 if w.is_alive():
+23859.8s 1168 
+23859.8s 1169 
+23859.8s 1170 
+23859.8s 1171 
+23859.8s 1172 
+23859.8s 1173 
+23859.8s 1174 
+23859.8s 1175 
+23859.8s 1176 
+23859.8s 1177 ^
+23859.8s 1178 ^^
+23859.8s 1179 ^^
+23859.8s 1180 ^^
+23859.8s 1181 ^^
+23859.9s 1182 ^^
+23859.9s 1183 ^^
+23859.9s 1184 ^^
+23859.9s 1185 ^^
+23859.9s 1186 ^^
+23859.9s 1187 ^^
+23859.9s 1188 ^^
+23859.9s 1189 ^
+23859.9s 1190 
+23859.9s 1191 
+23859.9s 1192 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+23859.9s 1193 
+23859.9s 1194 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+23859.9s 1195 
+23859.9s 1196 assert self._parent_pid == os.getpid(), 'can only test a child process'
+23859.9s 1197 assert self._parent_pid == os.getpid(), 'can only test a child process'
+23859.9s 1198 
+23859.9s 1199 
+23859.9s 1200 
+23859.9s 1201 
+23859.9s 1202 
+23859.9s 1203 
+23859.9s 1204 
+23859.9s 1205 
+23859.9s 1206 
+23859.9s 1207 
+23859.9s 1208 
+23859.9s 1209 
+23859.9s 1210 
+23859.9s 1211 ^
+23859.9s 1212 ^^
+23859.9s 1213 ^^
+23859.9s 1214 ^^
+23859.9s 1215 ^^
+23859.9s 1216 ^^
+23859.9s 1217 ^^
+23859.9s 1218 ^^
+23859.9s 1219 ^^
+23859.9s 1220 ^^
+23859.9s 1221 ^^
+23859.9s 1222 ^^
+23859.9s 1223 ^^
+23859.9s 1224 ^^
+23859.9s 1225 ^^
+23860.0s 1226 ^^
+23860.0s 1227 ^^
+23860.0s 1228 ^^
+23860.0s 1229 ^^
+23860.0s 1230 ^^
+23860.0s 1231 ^^
+23860.0s 1232 ^^
+23860.0s 1233 ^^
+23860.0s 1234 ^^
+23860.0s 1235 ^^
+23860.0s 1236 ^^
+23860.0s 1237 ^^
+23860.0s 1238 ^^
+23860.0s 1239 ^^
+23860.0s 1240 ^^
+23860.0s 1241 ^^
+23860.0s 1242 ^
+23860.0s 1243 
+23860.0s 1244 
+23860.0s 1245 AssertionError
+23860.0s 1246 AssertionError:
+23860.0s 1247 : can only test a child process
+23860.0s 1248 can only test a child process
+23860.0s 1249 
+23860.0s 1250 
+23860.4s 1251 Exception ignored in:
+23860.4s 1252 Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+23860.4s 1253 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+23860.4s 1254 
+23860.4s 1255 
+23860.4s 1256 Traceback (most recent call last):
+23860.4s 1257 
+23860.4s 1258 Traceback (most recent call last):
+23860.4s 1259 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+23860.4s 1260 
+23860.4s 1261 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+23860.4s 1262 
+23860.4s 1263 self._shutdown_workers()
+23860.4s 1264 self._shutdown_workers()
+23860.4s 1265 
+23860.4s 1266 
+23860.4s 1267 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+23860.4s 1268 
+23860.4s 1269 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+23860.4s 1270 
+23860.4s 1271 if w.is_alive():
+23860.4s 1272 if w.is_alive():
+23860.4s 1273 
+23860.4s 1274 
+23860.4s 1275 
+23860.4s 1276 
+23860.4s 1277 
+23860.4s 1278 
+23860.4s 1279 
+23860.5s 1280 
+23860.5s 1281 
+23860.5s 1282 ^
+23860.5s 1283 ^^
+23860.5s 1284 ^^
+23860.5s 1285 ^^
+23860.5s 1286 ^^
+23860.5s 1287 ^^
+23860.5s 1288 ^^
+23860.5s 1289 ^^
+23860.5s 1290 ^^
+23860.5s 1291 ^^
+23860.5s 1292 ^^
+23860.5s 1293 ^^
+23860.5s 1294 ^
+23860.5s 1295 
+23860.5s 1296 
+23860.5s 1297 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+23860.5s 1298 
+23860.5s 1299 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+23860.5s 1300 
+23860.6s 1301 assert self._parent_pid == os.getpid(), 'can only test a child process'
+23860.6s 1302 assert self._parent_pid == os.getpid(), 'can only test a child process'
+23860.6s 1303 
+23860.6s 1304 
+23860.6s 1305 
+23860.6s 1306 
+23860.6s 1307 
+23860.6s 1308 
+23860.6s 1309 
+23860.6s 1310 
+23860.6s 1311 
+23860.6s 1312 
+23860.7s 1313 
+23860.7s 1314 
+23860.7s 1315 
+23860.7s 1316 ^
+23860.7s 1317 ^^
+23860.7s 1318 ^^
+23860.7s 1319 ^^
+23860.7s 1320 ^^
+23860.7s 1321 ^^
+23860.7s 1322 ^^
+23860.7s 1323 ^^
+23860.7s 1324 ^^
+23860.7s 1325 ^^
+23860.7s 1326 ^^
+23860.7s 1327 ^^
+23860.7s 1328 ^^
+23860.7s 1329 ^^
+23860.7s 1330 ^^
+23860.8s 1331 ^^
+23860.8s 1332 ^^
+23860.8s 1333 ^^
+23860.8s 1334 ^^
+23860.8s 1335 ^^
+23860.8s 1336 ^^
+23860.8s 1337 ^^
+23860.8s 1338 ^^
+23860.8s 1339 ^^
+23860.8s 1340 ^^
+23860.8s 1341 ^^
+23860.8s 1342 ^^
+23860.8s 1343 ^^
+23860.8s 1344 ^^
+23860.8s 1345 ^^
+23860.8s 1346 ^^
+23860.8s 1347 ^
+23860.8s 1348 
+23860.8s 1349 
+23860.8s 1350 AssertionError
+23860.8s 1351 AssertionError:
+23860.8s 1352 : can only test a child process
+23860.8s 1353 can only test a child process
+23860.8s 1354 
+23860.8s 1355 
+23877.2s 1356 Exception ignored in:
+23877.2s 1357 Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+23877.2s 1358 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+23877.2s 1359 
+23877.2s 1360 
+23877.2s 1361 Traceback (most recent call last):
+23877.2s 1362 
+23877.2s 1363 Traceback (most recent call last):
+23877.2s 1364 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+23877.2s 1365 
+23877.2s 1366 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+23877.2s 1367 
+23877.2s 1368 self._shutdown_workers()
+23877.2s 1369 self._shutdown_workers()
+23877.2s 1370 
+23877.2s 1371 
+23877.2s 1372 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+23877.2s 1373 
+23877.2s 1374 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+23877.2s 1375 
+23877.2s 1376 if w.is_alive():
+23877.2s 1377 if w.is_alive():
+23877.2s 1378 
+23877.2s 1379 
+23877.3s 1380 
+23877.3s 1381 
+23877.3s 1382 
+23877.3s 1383 
+23877.3s 1384 
+23877.3s 1385 
+23877.3s 1386 
+23877.3s 1387 ^
+23877.3s 1388 ^^
+23877.3s 1389 ^^
+23877.3s 1390 ^^
+23877.3s 1391 ^^
+23877.3s 1392 ^^
+23877.3s 1393 ^^
+23877.3s 1394 ^^
+23877.3s 1395 ^^
+23877.3s 1396 ^^
+23877.3s 1397 ^^
+23877.3s 1398 ^^
+23877.3s 1399 ^
+23877.3s 1400 
+23877.3s 1401 
+23877.4s 1402 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+23877.4s 1403 
+23877.4s 1404 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+23877.4s 1405 
+23877.4s 1406 assert self._parent_pid == os.getpid(), 'can only test a child process'
+23877.4s 1407 assert self._parent_pid == os.getpid(), 'can only test a child process'
+23877.4s 1408 
+23877.4s 1409 
+23877.4s 1410 
+23877.4s 1411 
+23877.4s 1412 
+23877.4s 1413 
+23877.4s 1414 
+23877.4s 1415 
+23877.4s 1416 
+23877.4s 1417 
+23877.4s 1418 
+23877.4s 1419 
+23877.4s 1420 
+23877.4s 1421 ^
+23877.4s 1422 ^^
+23877.4s 1423 ^^
+23877.4s 1424 ^^
+23877.4s 1425 ^^
+23877.4s 1426 ^^
+23877.4s 1427 ^^
+23877.4s 1428 ^^
+23877.4s 1429 ^^
+23877.4s 1430 ^^
+23877.5s 1431 ^^
+23877.5s 1432 ^^
+23877.5s 1433 ^^
+23877.5s 1434 ^^
+23877.5s 1435 ^^
+23877.5s 1436 ^^
+23877.5s 1437 ^^
+23877.5s 1438 ^^
+23877.5s 1439 ^^
+23877.5s 1440 ^^
+23877.5s 1441 ^^
+23877.5s 1442 ^^
+23877.5s 1443 ^^
+23877.5s 1444 ^^
+23877.5s 1445 ^^
+23877.5s 1446 ^^
+23877.5s 1447 ^^
+23877.5s 1448 ^^
+23877.5s 1449 ^^
+23877.5s 1450 ^^
+23877.5s 1451 ^^
+23877.5s 1452 ^
+23877.5s 1453 
+23877.5s 1454 
+23877.5s 1455 AssertionError
+23877.5s 1456 AssertionError:
+23877.5s 1457 : can only test a child process
+23877.5s 1458 can only test a child process
+23877.5s 1459 
+23877.5s 1460 
+23881.2s 1461 Exception ignored in:
+23881.2s 1462 Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+23881.2s 1463 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+23881.2s 1464 
+23881.2s 1465 
+23881.2s 1466 Traceback (most recent call last):
+23881.2s 1467 
+23881.2s 1468 Traceback (most recent call last):
+23881.2s 1469 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+23881.2s 1470 
+23881.2s 1471 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+23881.2s 1472 
+23881.2s 1473 self._shutdown_workers()
+23881.2s 1474 self._shutdown_workers()
+23881.2s 1475 
+23881.2s 1476 
+23881.2s 1477 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+23881.2s 1478 
+23881.2s 1479 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+23881.2s 1480 
+23881.2s 1481 if w.is_alive():
+23881.2s 1482 if w.is_alive():
+23881.2s 1483 
+23881.2s 1484 
+23881.2s 1485 
+23881.3s 1486 
+23881.3s 1487 
+23881.3s 1488 
+23881.3s 1489 
+23881.3s 1490 
+23881.3s 1491 
+23881.3s 1492 ^
+23881.3s 1493 ^^
+23881.3s 1494 ^^
+23881.3s 1495 ^^
+23881.3s 1496 ^^
+23881.3s 1497 ^^
+23881.3s 1498 ^^
+23881.3s 1499 ^^
+23881.3s 1500 ^^
+23881.3s 1501 ^^
+23881.3s 1502 ^^
+23881.3s 1503 ^^
+23881.3s 1504 ^
+23881.3s 1505 
+23881.3s 1506 
+23881.3s 1507 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+23881.3s 1508 
+23881.3s 1509 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+23881.3s 1510 
+23881.3s 1511 assert self._parent_pid == os.getpid(), 'can only test a child process'
+23881.3s 1512 assert self._parent_pid == os.getpid(), 'can only test a child process'
+23881.3s 1513 
+23881.3s 1514 
+23881.3s 1515 
+23881.3s 1516 
+23881.3s 1517 
+23881.3s 1518 
+23881.3s 1519 
+23881.3s 1520 
+23881.3s 1521 
+23881.3s 1522 
+23881.4s 1523 
+23881.4s 1524 
+23881.4s 1525 
+23881.4s 1526 ^
+23881.4s 1527 ^^
+23881.4s 1528 ^^
+23881.4s 1529 ^^
+23881.4s 1530 ^^
+23881.4s 1531 ^^
+23881.4s 1532 ^^
+23881.4s 1533 ^^
+23881.4s 1534 ^^
+23881.4s 1535 ^^
+23881.4s 1536 ^^
+23881.4s 1537 ^^
+23881.4s 1538 ^^
+23881.4s 1539 ^^
+23881.4s 1540 ^^
+23881.4s 1541 ^^
+23881.4s 1542 ^^
+23881.4s 1543 ^^
+23881.4s 1544 ^^
+23881.4s 1545 ^^
+23881.5s 1546 ^^
+23881.5s 1547 ^^
+23881.5s 1548 ^^
+23881.5s 1549 ^^
+23881.5s 1550 ^^
+23881.5s 1551 ^^
+23881.5s 1552 ^^
+23881.5s 1553 ^^
+23881.5s 1554 ^^
+23881.5s 1555 ^^
+23881.5s 1556 ^^
+23881.5s 1557 ^
+23881.5s 1558 
+23881.5s 1559 
+23881.5s 1560 AssertionError
+23881.5s 1561 AssertionError:
+23881.5s 1562 : can only test a child process
+23881.5s 1563 can only test a child process
+23881.5s 1564 
+23881.5s 1565 
+26353.3s 1566 [Epoch 21] train_total=7.4135  validation_total=7.9277
+26353.6s 1567 [Checkpoint] Saved train_state_epoch21.pt and encoder_epoch21.pt
+26473.9s 1568 Exception ignored in:
+26473.9s 1569 Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+26473.9s 1570 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+26473.9s 1571 
+26473.9s 1572 
+26473.9s 1573 Traceback (most recent call last):
+26473.9s 1574 
+26473.9s 1575 Traceback (most recent call last):
+26473.9s 1576 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+26473.9s 1577 
+26473.9s 1578 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+26473.9s 1579 
+26473.9s 1580 self._shutdown_workers()
+26474.0s 1581 self._shutdown_workers()
+26474.0s 1582 
+26474.0s 1583 
+26474.0s 1584 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+26474.0s 1585 
+26474.0s 1586 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+26474.0s 1587 
+26474.0s 1588 if w.is_alive():
+26474.0s 1589 if w.is_alive():
+26474.0s 1590 
+26474.0s 1591 
+26474.0s 1592 
+26474.0s 1593 
+26474.0s 1594 
+26474.0s 1595 
+26474.0s 1596 
+26474.0s 1597 
+26474.0s 1598 
+26474.0s 1599 ^
+26474.0s 1600 ^^
+26474.0s 1601 ^^
+26474.0s 1602 ^^
+26474.0s 1603 ^^
+26474.0s 1604 ^^
+26474.0s 1605 ^^
+26474.0s 1606 ^^
+26474.0s 1607 ^^
+26474.0s 1608 ^^
+26474.0s 1609 ^^
+26474.0s 1610 ^^
+26474.1s 1611 ^
+26474.1s 1612 
+26474.1s 1613 
+26474.1s 1614 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+26474.1s 1615 
+26474.1s 1616 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+26474.1s 1617 
+26474.1s 1618 assert self._parent_pid == os.getpid(), 'can only test a child process'
+26474.1s 1619 assert self._parent_pid == os.getpid(), 'can only test a child process'
+26474.1s 1620 
+26474.1s 1621 
+26474.1s 1622 
+26474.1s 1623 
+26474.1s 1624 
+26474.1s 1625 
+26474.1s 1626 
+26474.1s 1627 
+26474.1s 1628 
+26474.1s 1629 
+26474.1s 1630 
+26474.1s 1631 
+26474.1s 1632 
+26474.1s 1633 ^
+26474.1s 1634 ^^
+26474.1s 1635 ^^
+26474.1s 1636 ^^
+26474.1s 1637 ^^
+26474.1s 1638 ^^
+26474.1s 1639 ^^
+26474.1s 1640 ^Exception ignored in:
+26474.1s 1641 Exception ignored in: ^
+26474.1s 1642 ^<function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+26474.1s 1643 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>^
+26474.1s 1644 ^
+26474.1s 1645 
+26474.1s 1646 
+26474.1s 1647 ^
+26474.1s 1648 ^Traceback (most recent call last):
+26474.1s 1649 
+26474.1s 1650 Traceback (most recent call last):
+26474.1s 1651 ^
+26474.1s 1652 ^  File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+26474.1s 1653 
+26474.1s 1654 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+26474.2s 1655 ^
+26474.2s 1656 ^
+26474.2s 1657 self._shutdown_workers()
+26474.2s 1658 self._shutdown_workers()^
+26474.2s 1659 ^^
+26474.2s 1660 ^
+26474.2s 1661 
+26474.2s 1662 
+26474.2s 1663 ^
+26474.2s 1664 ^  File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+26474.2s 1665 
+26474.2s 1666 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+26474.2s 1667 ^
+26474.2s 1668 ^^
+26474.2s 1669 ^
+26474.2s 1670 ^
+26474.2s 1671 ^if w.is_alive():
+26474.2s 1672 if w.is_alive():^
+26474.2s 1673 ^
+26474.2s 1674 
+26474.2s 1675 
+26474.2s 1676 ^
+26474.2s 1677 ^
+26474.2s 1678 ^
+26474.2s 1679 ^
+26474.2s 1680 ^
+26474.2s 1681 ^
+26474.2s 1682 ^
+26474.2s 1683 ^
+26474.2s 1684 
+26474.2s 1685 ^
+26474.2s 1686 ^
+26474.2s 1687 ^
+26474.2s 1688 ^
+26474.2s 1689 ^
+26474.2s 1690 ^^
+26474.2s 1691 ^^
+26474.2s 1692 ^^
+26474.2s 1693 ^^
+26474.2s 1694 ^^
+26474.2s 1695 ^^
+26474.2s 1696 ^^
+26474.2s 1697 ^^
+26474.2s 1698 ^^
+26474.2s 1699 ^^
+26474.2s 1700 ^
+26474.2s 1701 
+26474.2s 1702 
+26474.2s 1703 ^
+26474.2s 1704 ^AssertionError
+26474.2s 1705 AssertionError^
+26474.2s 1706 ^:
+26474.2s 1707 : can only test a child process
+26474.2s 1708 can only test a child process^
+26474.2s 1709 ^
+26474.2s 1710 
+26474.2s 1711 
+26474.2s 1712 ^
+26474.2s 1713 ^^
+26474.2s 1714 ^^
+26474.2s 1715 ^^
+26474.2s 1716 ^
+26474.2s 1717 
+26474.2s 1718 
+26474.3s 1719 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+26474.3s 1720 
+26474.3s 1721 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+26474.3s 1722 
+26474.3s 1723 assert self._parent_pid == os.getpid(), 'can only test a child process'
+26474.3s 1724 assert self._parent_pid == os.getpid(), 'can only test a child process'
+26474.3s 1725 
+26474.3s 1726 
+26474.3s 1727 
+26474.3s 1728 
+26474.3s 1729 
+26474.3s 1730 
+26474.3s 1731 
+26474.3s 1732 
+26474.3s 1733 
+26474.3s 1734 
+26474.3s 1735 
+26474.3s 1736 
+26474.3s 1737 
+26474.3s 1738 ^
+26474.3s 1739 ^^
+26474.3s 1740 ^^
+26474.3s 1741 ^^
+26474.3s 1742 ^^
+26474.3s 1743 ^^
+26474.3s 1744 ^^
+26474.3s 1745 ^^
+26474.3s 1746 ^^
+26474.3s 1747 ^^
+26474.3s 1748 ^^
+26474.3s 1749 ^^
+26474.3s 1750 ^^
+26474.3s 1751 ^^
+26474.3s 1752 ^^
+26474.3s 1753 ^^
+26474.3s 1754 ^^
+26474.3s 1755 ^^
+26474.3s 1756 ^^
+26474.3s 1757 ^^
+26474.4s 1758 ^^
+26474.4s 1759 ^^
+26474.4s 1760 ^^
+26474.4s 1761 ^^
+26474.4s 1762 ^^
+26474.4s 1763 ^^
+26474.4s 1764 ^^
+26474.4s 1765 ^^
+26474.4s 1766 ^^
+26474.4s 1767 ^^
+26474.4s 1768 ^^
+26474.4s 1769 ^
+26474.4s 1770 
+26474.4s 1771 
+26474.4s 1772 AssertionError
+26474.4s 1773 AssertionError:
+26474.4s 1774 : can only test a child process
+26474.4s 1775 can only test a child process
+26474.4s 1776 
+26474.4s 1777 
+26491.0s 1778 Exception ignored in:
+26491.0s 1779 Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+26491.0s 1780 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+26491.0s 1781 
+26491.0s 1782 
+26491.0s 1783 Traceback (most recent call last):
+26491.0s 1784 
+26491.0s 1785 Traceback (most recent call last):
+26491.0s 1786 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+26491.0s 1787 
+26491.0s 1788 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+26491.0s 1789 
+26491.0s 1790 self._shutdown_workers()
+26491.0s 1791 self._shutdown_workers()
+26491.0s 1792 
+26491.0s 1793 
+26491.0s 1794 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+26491.0s 1795 
+26491.0s 1796 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+26491.0s 1797 
+26491.0s 1798 if w.is_alive():
+26491.1s 1799 if w.is_alive():
+26491.1s 1800 
+26491.1s 1801 
+26491.1s 1802 
+26491.1s 1803 
+26491.1s 1804 
+26491.1s 1805 
+26491.1s 1806 
+26491.1s 1807 
+26491.1s 1808 
+26491.1s 1809 ^
+26491.1s 1810 ^^
+26491.1s 1811 ^^
+26491.1s 1812 ^^
+26491.1s 1813 ^^
+26491.1s 1814 ^^
+26491.1s 1815 ^^
+26491.1s 1816 ^^
+26491.1s 1817 ^^
+26491.2s 1818 ^^
+26491.2s 1819 ^^
+26491.2s 1820 ^^
+26491.2s 1821 ^
+26491.2s 1822 
+26491.2s 1823 
+26491.2s 1824 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+26491.2s 1825 
+26491.2s 1826 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+26491.2s 1827 
+26491.2s 1828 assert self._parent_pid == os.getpid(), 'can only test a child process'
+26491.2s 1829 assert self._parent_pid == os.getpid(), 'can only test a child process'
+26491.2s 1830 
+26491.2s 1831 
+26491.2s 1832 
+26491.2s 1833 
+26491.2s 1834 
+26491.2s 1835 
+26491.2s 1836 
+26491.2s 1837 
+26491.2s 1838 
+26491.2s 1839 
+26491.3s 1840 
+26491.3s 1841 
+26491.3s 1842 
+26491.3s 1843 ^
+26491.3s 1844 ^^
+26491.3s 1845 ^^
+26491.3s 1846 ^^
+26491.3s 1847 ^^
+26491.3s 1848 ^^
+26491.3s 1849 ^^
+26491.3s 1850 ^^
+26491.3s 1851 ^^
+26491.3s 1852 ^^
+26491.3s 1853 ^^
+26491.3s 1854 ^^
+26491.3s 1855 ^^
+26491.4s 1856 ^^
+26491.4s 1857 ^^
+26491.4s 1858 ^^
+26491.4s 1859 ^^
+26491.4s 1860 ^^
+26491.4s 1861 ^^
+26491.4s 1862 ^^
+26491.4s 1863 ^^
+26491.4s 1864 ^^
+26491.4s 1865 ^^
+26491.4s 1866 ^^
+26491.4s 1867 ^^
+26491.4s 1868 ^^
+26491.4s 1869 ^^
+26491.4s 1870 ^^
+26491.4s 1871 ^^
+26491.4s 1872 ^^
+26491.4s 1873 ^^
+26491.5s 1874 ^
+26491.5s 1875 
+26491.5s 1876 
+26491.5s 1877 AssertionError
+26491.5s 1878 AssertionError:
+26491.5s 1879 : can only test a child process
+26491.5s 1880 can only test a child process
+26491.5s 1881 
+26491.5s 1882 
+26523.8s 1883 Exception ignored in:
+26523.8s 1884 Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+26523.8s 1885 <function _MultiProcessingDataLoaderIter.__del__ at 0x7f38acab6f20>
+26523.8s 1886 
+26523.8s 1887 
+26523.8s 1888 Traceback (most recent call last):
+26523.8s 1889 
+26523.8s 1890 Traceback (most recent call last):
+26523.8s 1891 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+26523.8s 1892 
+26523.8s 1893 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1707, in __del__
+26523.9s 1894 
+26523.9s 1895 self._shutdown_workers()
+26523.9s 1896 self._shutdown_workers()
+26523.9s 1897 
+26523.9s 1898 
+26523.9s 1899 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+26523.9s 1900 
+26523.9s 1901 File "/usr/local/lib/python3.12/dist-packages/torch/utils/data/dataloader.py", line 1690, in _shutdown_workers
+26523.9s 1902 
+26523.9s 1903 if w.is_alive():
+26523.9s 1904 if w.is_alive():
+26523.9s 1905 
+26523.9s 1906 
+26523.9s 1907 
+26523.9s 1908 
+26523.9s 1909 
+26523.9s 1910 
+26523.9s 1911 
+26523.9s 1912 
+26523.9s 1913 
+26523.9s 1914 ^
+26523.9s 1915 ^^
+26523.9s 1916 ^^
+26523.9s 1917 ^^
+26523.9s 1918 ^^
+26523.9s 1919 ^^
+26523.9s 1920 ^^
+26523.9s 1921 ^^
+26523.9s 1922 ^^
+26523.9s 1923 ^^
+26523.9s 1924 ^^
+26523.9s 1925 ^^
+26523.9s 1926 ^
+26523.9s 1927 
+26523.9s 1928 
+26523.9s 1929 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+26523.9s 1930 
+26523.9s 1931 File "/usr/lib/python3.12/multiprocessing/process.py", line 160, in is_alive
+26523.9s 1932 
+26523.9s 1933 assert self._parent_pid == os.getpid(), 'can only test a child process'
+26523.9s 1934 assert self._parent_pid == os.getpid(), 'can only test a child process'
+26523.9s 1935 
+26523.9s 1936 
+26523.9s 1937 
+26523.9s 1938 
+26524.0s 1939 
+26524.0s 1940 
+26524.0s 1941 
+26524.0s 1942 
+26524.0s 1943 
+26524.0s 1944 
+26524.0s 1945 
+26524.0s 1946 
+26524.0s 1947 
+26524.0s 1948 ^
+26524.0s 1949 ^^
+26524.0s 1950 ^^
+26524.0s 1951 ^^
+26524.0s 1952 ^^
+26524.0s 1953 ^^
+26524.0s 1954 ^^
+26524.0s 1955 ^^
+26524.0s 1956 ^^
+26524.0s 1957 ^^
+26524.0s 1958 ^^
+26524.0s 1959 ^^
+26524.0s 1960 ^^
+26524.0s 1961 ^^
+26524.0s 1962 ^^
+26524.0s 1963 ^^
+26524.0s 1964 ^^
+26524.0s 1965 ^^
+26524.0s 1966 ^^
+26524.0s 1967 ^^
+26524.0s 1968 ^^
+26524.0s 1969 ^^
+26524.0s 1970 ^^
+26524.0s 1971 ^^
+26524.1s 1972 ^^
+26524.1s 1973 ^^
+26524.1s 1974 ^^
+26524.1s 1975 ^^
+26524.1s 1976 ^^
+26524.1s 1977 ^^
+26524.1s 1978 ^^
+26524.1s 1979 ^
+26524.1s 1980 
+26524.1s 1981 
+26524.1s 1982 AssertionError
+26524.1s 1983 AssertionError:
+26524.1s 1984 : can only test a child process
+26524.1s 1985 can only test a child process
+26524.1s 1986 
+26524.1s 1987 
+28961.1s 1988 [Epoch 22] train_total=7.4142  validation_total=7.9819
+28961.5s 1989 [Checkpoint] Saved train_state_epoch22.pt and encoder_epoch22.pt
+28961.5s 1990 [Time budget] 7.50h budget reached after epoch 22 - stopping here (epoch 22 is fully checkpointed). Re-run train() with the same run_name once its results/checkpoints are back in place to continue from epoch 23.
+28961.8s 1991 run_name  epoch  epoch_avg_loss_total  epoch_avg_loss_global  epoch_avg_loss_dense  validation_total  validation_global  validation_dense
+28961.8s 1992 densecl_pretrain_v1      1             12.636265               7.070068              5.566197         14.065767           7.765813          6.299955
+28961.8s 1993 densecl_pretrain_v1      2             11.099609               5.858680              5.240929         12.287118           8.440124          3.846994
+28961.8s 1994 densecl_pretrain_v1      3              9.872752               5.395730              4.477022         13.210798           8.326477          4.884320
+28961.8s 1995 densecl_pretrain_v1      4              8.820560               5.035851              3.784709         10.669536           6.291615          4.377921
+28961.8s 1996 densecl_pretrain_v1      5              8.384087               4.813350              3.570737          9.798204           5.694997          4.103207
+28961.8s 1997 densecl_pretrain_v1      6              8.117496               4.653273              3.464223          9.367074           5.358410          4.008664
+28961.8s 1998 densecl_pretrain_v1      7              7.916705               4.524506              3.392199          8.676311           4.727750          3.948561
+28961.8s 1999 densecl_pretrain_v1      8              7.779888               4.434213              3.345675          9.245550           5.306099          3.939451
+28961.8s 2000 densecl_pretrain_v1      9              7.660463               4.354511              3.305952          8.441604           4.598454          3.843150
+28961.8s 2001 densecl_pretrain_v1     10              7.575907               4.296039              3.279868          8.281341           4.471266          3.810076
+28961.8s 2002 densecl_pretrain_v1     11              7.489237               4.235913              3.253324          8.180876           4.405152          3.775724
+28961.8s 2003 densecl_pretrain_v1     12              7.402195               4.172194              3.230002          7.919148           4.171475          3.747673
+28961.8s 2004 densecl_pretrain_v1     13              7.412304               4.180548              3.231756          7.934267           4.168177          3.766090
+28961.8s 2005 densecl_pretrain_v1     14              7.403198               4.174273              3.228925          7.957268           4.196744          3.760524
+28961.8s 2006 densecl_pretrain_v1     15              7.404251               4.176192              3.228059          7.911928           4.164048          3.747880
+28961.8s 2007 densecl_pretrain_v1     16              7.409379               4.181007              3.228372          7.938265           4.184076          3.754189
+28961.8s 2008 densecl_pretrain_v1     17              7.411250               4.183245              3.228006          7.956654           4.188339          3.768315
+28961.8s 2009 densecl_pretrain_v1     18              7.413511               4.180310              3.233201          7.972543           4.198508          3.774035
+28961.8s 2010 densecl_pretrain_v1     19              7.404764               4.177335              3.227429          7.930063           4.181523          3.748540
+28961.8s 2011 densecl_pretrain_v1     20              7.405630               4.176119              3.229511          7.955668           4.183861          3.771807
+28961.8s 2012 densecl_pretrain_v1     21              7.413548               4.181360              3.232187          7.927661           4.170679          3.756982
+28961.8s 2013 densecl_pretrain_v1     22              7.414192               4.182130              3.232061          7.981851           4.205319          3.776532
+28961.8s 2014 
+28961.8s 2015 Checkpoints saved:
+28961.8s 2016 encoder_epoch1.pt  (11.3 MB)
+28961.8s 2017 encoder_epoch10.pt  (11.3 MB)
+28961.8s 2018 encoder_epoch11.pt  (11.3 MB)
+28961.8s 2019 encoder_epoch12.pt  (11.3 MB)
+28961.8s 2020 encoder_epoch13.pt  (11.3 MB)
+28961.8s 2021 encoder_epoch14.pt  (11.3 MB)
+28961.8s 2022 encoder_epoch15.pt  (11.3 MB)
+28961.8s 2023 encoder_epoch16.pt  (11.3 MB)
+28961.8s 2024 encoder_epoch17.pt  (11.3 MB)
+28961.8s 2025 encoder_epoch18.pt  (11.3 MB)
+28961.8s 2026 encoder_epoch19.pt  (11.3 MB)
+28961.8s 2027 encoder_epoch2.pt  (11.3 MB)
+28961.8s 2028 encoder_epoch20.pt  (11.3 MB)
+28961.8s 2029 encoder_epoch21.pt  (11.3 MB)
+28961.8s 2030 encoder_epoch22.pt  (11.3 MB)
+28961.8s 2031 encoder_epoch3.pt  (11.3 MB)
+28961.8s 2032 encoder_epoch4.pt  (11.3 MB)
+28961.8s 2033 encoder_epoch5.pt  (11.3 MB)
+28961.8s 2034 encoder_epoch6.pt  (11.3 MB)
+28961.8s 2035 encoder_epoch7.pt  (11.3 MB)
+28961.8s 2036 encoder_epoch8.pt  (11.3 MB)
+28961.8s 2037 encoder_epoch9.pt  (11.3 MB)
+28961.8s 2038 train_state_epoch1.pt  (38.3 MB)
+28961.8s 2039 train_state_epoch10.pt  (38.3 MB)
+28961.8s 2040 train_state_epoch11.pt  (38.3 MB)
+28961.8s 2041 train_state_epoch12.pt  (38.3 MB)
+28961.8s 2042 train_state_epoch13.pt  (38.3 MB)
+28961.8s 2043 train_state_epoch14.pt  (38.3 MB)
+28961.8s 2044 train_state_epoch15.pt  (38.3 MB)
+28961.8s 2045 train_state_epoch16.pt  (38.3 MB)
+28961.8s 2046 train_state_epoch17.pt  (38.3 MB)
+28961.8s 2047 train_state_epoch18.pt  (38.3 MB)
+28961.8s 2048 train_state_epoch19.pt  (38.3 MB)
+28961.8s 2049 train_state_epoch2.pt  (38.3 MB)
+28961.8s 2050 train_state_epoch20.pt  (38.3 MB)
+28961.8s 2051 train_state_epoch21.pt  (38.3 MB)
+28961.8s 2052 train_state_epoch22.pt  (38.3 MB)
+28961.8s 2053 train_state_epoch3.pt  (38.3 MB)
+28961.8s 2054 train_state_epoch4.pt  (38.3 MB)
+28961.8s 2055 train_state_epoch5.pt  (38.3 MB)
+28961.8s 2056 train_state_epoch6.pt  (38.3 MB)
+28961.8s 2057 train_state_epoch7.pt  (38.3 MB)
+28961.8s 2058 train_state_epoch8.pt  (38.3 MB)
+28961.8s 2059 train_state_epoch9.pt  (38.3 MB)
+28967.0s 2060 /usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+28967.0s 2061 cells[i][c] = re.sub('\\\\\|', '|', cell)
+28967.2s 2062 /usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+28967.2s 2063 text = re.sub(r'_', '\_', text) # Escape underscores in display text
+28967.8s 2064 [NbConvertApp] Converting notebook __notebook__.ipynb to notebook
+28968.3s 2065 [NbConvertApp] Writing 472316 bytes to __notebook__.ipynb
+28970.6s 2066 [NbConvertApp] Converting notebook __notebook__.ipynb to html
+28971.7s 2067 [NbConvertApp] Writing 1011028 bytes to __results__.html

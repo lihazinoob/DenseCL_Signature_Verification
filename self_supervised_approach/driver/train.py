@@ -59,6 +59,7 @@ from __future__ import annotations
 
 import dataclasses
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -484,7 +485,20 @@ def save_checkpoint(models: Models, optimizer: SGD, scheduler: LinearWarmupCosin
     print(f"  [Checkpoint] Saved train_state_epoch{epoch}.pt and encoder_epoch{epoch}.pt")
 
 
-def train(config: TrainConfig = TrainConfig()) -> None:
+def train(config: TrainConfig = TrainConfig(), time_budget_seconds: float | None = None) -> None:
+    """`time_budget_seconds` is a session-runtime knob, not a training-schedule
+    field - deliberately NOT part of `TrainConfig` (so it's never compared by
+    `_validate_resumed_config`; a fresh session naturally gets its own fresh
+    budget regardless of what a previous session used). When set, checked only
+    at epoch BOUNDARIES, after that epoch's checkpoint has already saved - this
+    can only ever stop the run at an already-safely-persisted point, never
+    mid-epoch, matching the granularity the whole resume protocol is built
+    around. Built for time-limited hosted environments (e.g. Kaggle's session
+    runtime cap) - pass something safely under the actual limit (leaving room
+    for the last epoch's own duration plus checkpoint-save time), not the
+    limit itself.
+    """
+    start_time = time.monotonic()
     torch.manual_seed(config.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(config.seed)
@@ -529,7 +543,9 @@ def train(config: TrainConfig = TrainConfig()) -> None:
                   "current TrainConfig matches what produced it.")
 
         models.load_resumable_state(checkpoint)
-        optimizer.load_state_dict(checkpoint["optimizer"])
+        # NOT optimizer.load_state_dict(...) here yet - see the note below,
+        # by the scheduler construction, for why that has to happen AFTER
+        # the scheduler exists.
 
         starting_epoch = checkpoint["epoch"] + 1
         global_step = checkpoint["global_step"]
@@ -538,10 +554,11 @@ def train(config: TrainConfig = TrainConfig()) -> None:
         # crash happened between the CSV write and the checkpoint save for
         # some epoch, this drops that epoch's now-orphaned CSV row(s)
         # rather than double-counting them once it's redone.
+        ckpt_epoch = checkpoint["epoch"]
         if epoch_csv.exists():
-            epoch_logs = pd.read_csv(epoch_csv).query("epoch <= @checkpoint['epoch']").to_dict("records")
+            epoch_logs = pd.read_csv(epoch_csv).query("epoch <= @ckpt_epoch").to_dict("records")
         if step_csv.exists():
-            step_logs = pd.read_csv(step_csv).query("epoch <= @checkpoint['epoch']").to_dict("records")
+            step_logs = pd.read_csv(step_csv).query("epoch <= @ckpt_epoch").to_dict("records")
 
         if starting_epoch > config.num_epochs:
             print(f"'{config.run_name}' already completed all {config.num_epochs} epochs - nothing to do.")
@@ -555,10 +572,25 @@ def train(config: TrainConfig = TrainConfig()) -> None:
     warmup_steps = max(1, config.warmup_epochs * steps_per_epoch)
     total_steps = max(warmup_steps + 1, config.num_epochs * steps_per_epoch)
     scheduler = LinearWarmupCosineAnnealingLR(optimizer, warmup_steps=warmup_steps, total_steps=total_steps)
-
+    # `LRScheduler.__init__` ALWAYS calls `_initial_step()` (a PyTorch
+    # internal, unconditional on `last_epoch`), which writes a fresh
+    # `get_lr()` value straight into `optimizer.param_groups[i]['lr']` - for
+    # this scheduler, that's `warmup_start_lr` (0.0), since `_initial_step`
+    # runs with `last_epoch == 0`. So the scheduler construction above
+    # ALWAYS clobbers whatever LR was in the optimizer to 0.0, checkpoint or
+    # not. `optimizer.load_state_dict(...)` must run AFTER this line (never
+    # before it) so its restored `lr` is the last thing written - otherwise
+    # the resumed run silently trains at LR 0.0 forever after (this
+    # scheduler's `get_lr()` is recursive - it multiplies the CURRENT
+    # `group["lr"]` by a ratio each step, so once it's 0 it can never
+    # recover on its own). `scheduler.load_state_dict(...)` does NOT have
+    # this problem - it's just `self.__dict__.update(...)`, restoring the
+    # scheduler's own attributes (`last_epoch` etc.), never touching the
+    # optimizer.
     if checkpoint is not None:
         _validate_resumed_schedule(checkpoint["scheduler"], warmup_steps, total_steps)
         scheduler.load_state_dict(checkpoint["scheduler"])
+        optimizer.load_state_dict(checkpoint["optimizer"])
 
     print(f"Run             : {config.run_name}")
     print(f"Device          : {device}")
@@ -624,6 +656,12 @@ def train(config: TrainConfig = TrainConfig()) -> None:
         # RESUME PROTOCOL section for why (power outages can strike after
         # any epoch, not just ones divisible by some frequency).
         save_checkpoint(models, optimizer, scheduler, epoch, global_step, config, run_dir)
+
+        if time_budget_seconds is not None and time.monotonic() - start_time >= time_budget_seconds:
+            print(f"  [Time budget] {time_budget_seconds / 3600:.2f}h budget reached after epoch {epoch} - "
+                  f"stopping here (epoch {epoch} is fully checkpointed). Re-run train() with the same "
+                  f"run_name once its results/checkpoints are back in place to continue from epoch {epoch + 1}.")
+            return
 
 
 if __name__ == "__main__":
