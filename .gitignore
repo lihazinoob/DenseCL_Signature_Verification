@@ -1,5 +1,6 @@
 .venv/
 analysis/
-data/
+data/all
 tools/
 self_supervised_approach/results/
+supervised_verification_approach/results/

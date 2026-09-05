@@ -29,6 +29,7 @@ from torch.utils.data import Dataset
 
 from augment import DEFAULT_CONFIG, AugmentConfig, generate_view
 from mask import compute_foreground_mask
+from test_set_creation import OUTPUT_DIR as TEST_SPLIT_ROOT
 from test_set_creation import load_test_writer_ids
 
 # Silences OpenCV's own internal WARNING-level logging (e.g. grfmt_tiff.cpp's
@@ -45,16 +46,21 @@ def list_all_signature_paths(
     data_root: Path,
     exclude_test_writers: bool = True,
     extra_exclude_writer_ids: dict[str, set[str]] | None = None,
+    test_split_dir: Path = TEST_SPLIT_ROOT,
 ) -> list[Path]:
     """Every signature image path under `data_root/<dataset>/<writer>/<file>`.
 
     `exclude_test_writers=True` (the default, and the only correct setting
     for an actual training run) skips any writer listed in that dataset's
     held-out test split (`test_set_creation.py` /
-    `data/test_set_writer_split/<dataset>_test_writers.json`). Datasets with
-    no split file (Mendeley - see `test_set_creation.py`'s docstring for why)
-    have nothing excluded, via `load_test_writer_ids`'s empty-set fallback.
-    Only pass `False` for debugging/inspection - never for training.
+    `data/test_set_writer_split/<dataset>_test_writers.json`, or
+    `<test_split_dir>/<dataset>_test_writers.json` if `test_split_dir` is
+    overridden - e.g. `data/test_set_writer_split/fold_1/` for a K-fold CV
+    fold, see `create_cv_fold_split.py`). Datasets with no split file under
+    `test_split_dir` (Mendeley - see `test_set_creation.py`'s docstring for
+    why) have nothing excluded, via `load_test_writer_ids`'s empty-set
+    fallback. Only pass `exclude_test_writers=False` for debugging/
+    inspection - never for training.
 
     `extra_exclude_writer_ids`, if given, additionally skips specific writer
     IDs per dataset (e.g. `{"CEDAR": {"3", "7"}}`) - used to also strip the
@@ -66,7 +72,7 @@ def list_all_signature_paths(
     excluded_writer_counts: dict[str, int] = {}
 
     for dataset_dir in sorted(p for p in data_root.iterdir() if p.is_dir()):
-        test_writer_ids = load_test_writer_ids(dataset_dir.name) if exclude_test_writers else set()
+        test_writer_ids = load_test_writer_ids(dataset_dir.name, split_dir=test_split_dir) if exclude_test_writers else set()
         extra_ids = (extra_exclude_writer_ids or {}).get(dataset_dir.name, set())
         skip_ids = test_writer_ids | extra_ids
         excluded_writer_counts[dataset_dir.name] = 0
@@ -132,12 +138,15 @@ class SignatureSSLDataset(Dataset):
         exclude_test_writers: bool = True,
         extra_exclude_writer_ids: dict[str, set[str]] | None = None,
         image_paths_override: list[Path] | None = None,
+        test_split_dir: Path = TEST_SPLIT_ROOT,
     ) -> None:
         """`image_paths_override`, if given, bypasses the normal directory
         walk entirely and uses exactly this list of paths - the mechanism
         `driver/train.py` uses to build the validation dataset from
         `list_specific_writer_signature_paths`'s output (an "only these
-        writers" pool, not an "everything except" one)."""
+        writers" pool, not an "everything except" one). `test_split_dir`
+        is forwarded to `list_all_signature_paths` unchanged - see there
+        for the K-fold CV use case."""
         if image_paths_override is not None:
             self.image_paths = image_paths_override
         else:
@@ -145,6 +154,7 @@ class SignatureSSLDataset(Dataset):
                 data_root,
                 exclude_test_writers=exclude_test_writers,
                 extra_exclude_writer_ids=extra_exclude_writer_ids,
+                test_split_dir=test_split_dir,
             )
         if not self.image_paths:
             raise FileNotFoundError(f"No signature images found under {data_root}")

@@ -16,6 +16,16 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+# Silences OpenCV's own internal WARNING-level logging (e.g. grfmt_tiff.cpp's
+# "TIFFFetchNormalTag: ... Software tag contains null byte" spam - harmless
+# metadata truncation on every BHSig260 .tif read, not a real problem) while
+# still surfacing actual errors. Set once at import time since this is a
+# process-wide OpenCV setting, not per-call. `dataset.py` already sets this
+# for the SSL-side pipeline; set here too since this module (not dataset.py)
+# is the one every cv2.imread caller across both SSL and downstream
+# supervised code actually imports.
+cv2.utils.logging.setLogLevel(cv2.utils.logging.LOG_LEVEL_ERROR)
+
 TARGET_SIZE = 256
 
 

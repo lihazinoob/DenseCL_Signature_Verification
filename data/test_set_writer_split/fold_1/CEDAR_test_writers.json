@@ -1,0 +1,25 @@
+{
+  "dataset": "CEDAR",
+  "total_writers": 55,
+  "num_test_writers": 15,
+  "seed": 43,
+  "fold": "fold_1",
+  "excluded_prior_fold_writers": 20,
+  "test_writer_ids": [
+    "1",
+    "18",
+    "19",
+    "28",
+    "3",
+    "36",
+    "37",
+    "38",
+    "4",
+    "41",
+    "44",
+    "45",
+    "48",
+    "5",
+    "54"
+  ]
+}

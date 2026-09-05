@@ -1,0 +1,15 @@
+{
+  "dataset": "CEDAR",
+  "total_writers": 55,
+  "num_test_writers_excluded": 15,
+  "num_eligible_writers": 40,
+  "num_validation_writers": 5,
+  "seed": 42,
+  "validation_writer_ids": [
+    "12",
+    "21",
+    "30",
+    "31",
+    "33"
+  ]
+}

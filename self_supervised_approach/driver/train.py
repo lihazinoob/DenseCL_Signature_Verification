@@ -83,7 +83,9 @@ from losses import DenseCLLoss, LossConfig  # noqa: E402
 from lr_scheduler import LinearWarmupCosineAnnealingLR  # noqa: E402
 from memory_queue import DEFAULT_QUEUE_SIZE, MemoryQueue  # noqa: E402
 from momentum import DEFAULT_MOMENTUM, EMAModule, MomentumEncoder  # noqa: E402
+from test_set_creation import OUTPUT_DIR as TEST_SPLIT_ROOT  # noqa: E402
 from validation_set_creation import VALIDATION_WRITER_COUNTS, load_validation_writer_ids  # noqa: E402
+from validation_set_creation import OUTPUT_DIR as VALIDATION_SPLIT_ROOT  # noqa: E402
 
 DATA_ROOT = SELF_SUPERVISED_DIR.parent / "data" / "all"
 RESULTS_DIR = SELF_SUPERVISED_DIR / "results" / "training"
@@ -107,19 +109,26 @@ class TrainConfig:
     PROTOCOL section for why, and `_validate_resumed_config` for the check
     that enforces it."""
 
-    run_name: str = "densecl_pretrain_v1"
+    run_name: str = "all_data_ssl/fold_1"
 
-    # Temporarily lowered to 5 for a first, fast sanity-check run of the
-    # train/validation loss curves before committing to a full run. The
-    # "real" budget matching the existing thesis's own SSL run (50 epochs)
-    # is commented below - restore it once this short run looks healthy.
-    # warmup_epochs is reduced to 1 alongside num_epochs, not left at 5:
-    # with warmup_epochs == num_epochs, the entire short run would sit
-    # inside the linear warmup ramp and never reach the cosine decay phase
-    # at all, making its LR schedule (and therefore its loss curve) an
-    # unrepresentative preview of what the real 50-epoch run will look like.
-    num_epochs: int = 5          # num_epochs: int = 50
-    warmup_epochs: int = 1        # warmup_epochs: int = 5
+    # Which K-fold CV fold's writer split to pretrain under (see
+    # `create_cv_fold_split.py` and `build_dataloaders` below) - `None`
+    # (the original default) means "use the top-level, non-fold split
+    # files" (`densecl_pretrain_v1`'s original behavior). A fold value
+    # selects `data/test_set_writer_split/<fold>/` and
+    # `data/validation_set_writer_split/<fold>/` instead. New field, so it
+    # is simply absent from any pre-fold checkpoint's saved config and
+    # never checked on those runs' resumes (`_validate_resumed_config`
+    # only iterates the SAVED config's own keys).
+    fold: str | None = "fold_1"
+
+    # Real 50-epoch/5-warmup-epoch budget - confirmed via the saved
+    # TrainConfig inside fold_0's own checkpoint (`densecl_pretrain_v1`,
+    # copied into `all_data_ssl/fold_0`) to be the exact configuration
+    # that produced it, so every fold trains under an identical schedule
+    # and only the excluded writers differ.
+    num_epochs: int = 50
+    warmup_epochs: int = 5
 
     # Empirically measured on the actual target GPU (RTX 3050 Laptop, 4.29GB):
     # batch=16 peaked at ~6.15GB and spilled into slow paged memory (one step
@@ -129,7 +138,7 @@ class TrainConfig:
     # because the dense loss's negative pool is drawn only from the current
     # batch (no queue), so a larger batch gives it more diverse negatives.
     batch_size: int = 8
-    num_workers: int = 0  # 0 is the safest default on Windows; raise if stable - see CONFIG_FIELDS_IGNORED_ON_RESUME
+    num_workers: int = 4  # matches fold_0's confirmed config; explicitly a no-effect-on-results knob (CONFIG_FIELDS_IGNORED_ON_RESUME)
 
     # SGD + linear LR scaling rule, both matching MoCo's own standard
     # recipe (base_lr=0.03 @ batch=256) and this project's existing thesis
@@ -238,13 +247,24 @@ def build_dataloaders(config: TrainConfig, starting_epoch: int = 1) -> tuple[Dat
     times the process happened to restart. Without this, a resumed run's
     first epoch would silently replay whichever earlier epoch's shuffle
     order happened to share `config.seed`'s starting point, instead of
-    getting its own distinct permutation."""
+    getting its own distinct permutation.
+
+    `config.fold`, if set, selects that fold's writer splits
+    (`data/test_set_writer_split/<fold>/`, `data/validation_set_writer_split/<fold>/`)
+    instead of the top-level, non-fold split files - see `create_cv_fold_split.py`
+    for how a fold's splits are generated (K-fold CV, roadmap doc SS on
+    generalization evidence)."""
+    test_split_dir = TEST_SPLIT_ROOT / config.fold if config.fold else TEST_SPLIT_ROOT
+    validation_split_dir = VALIDATION_SPLIT_ROOT / config.fold if config.fold else VALIDATION_SPLIT_ROOT
+
     validation_writer_ids = {
-        dataset_name: load_validation_writer_ids(dataset_name)
+        dataset_name: load_validation_writer_ids(dataset_name, split_dir=validation_split_dir)
         for dataset_name in VALIDATION_WRITER_COUNTS
     }
 
-    train_dataset = SignatureSSLDataset(DATA_ROOT, extra_exclude_writer_ids=validation_writer_ids)
+    train_dataset = SignatureSSLDataset(
+        DATA_ROOT, extra_exclude_writer_ids=validation_writer_ids, test_split_dir=test_split_dir,
+    )
 
     validation_paths = list_specific_writer_signature_paths(DATA_ROOT, validation_writer_ids)
     validation_dataset = SignatureSSLDataset(DATA_ROOT, image_paths_override=validation_paths)
@@ -593,6 +613,7 @@ def train(config: TrainConfig = TrainConfig(), time_budget_seconds: float | None
         optimizer.load_state_dict(checkpoint["optimizer"])
 
     print(f"Run             : {config.run_name}")
+    print(f"CV fold         : {config.fold if config.fold else '(none - top-level split)'}")
     print(f"Device          : {device}")
     print(f"Dataset         : {len(train_loader.dataset)} train / {len(validation_loader.dataset)} validation (writer-level, fixed split)")
     print(f"Epochs          : {config.num_epochs} (starting at epoch {starting_epoch})")

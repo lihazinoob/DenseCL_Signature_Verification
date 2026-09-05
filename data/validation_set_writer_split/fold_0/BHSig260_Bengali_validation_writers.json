@@ -1,0 +1,20 @@
+{
+  "dataset": "BHSig260_Bengali",
+  "total_writers": 100,
+  "num_test_writers_excluded": 30,
+  "num_eligible_writers": 70,
+  "num_validation_writers": 10,
+  "seed": 42,
+  "validation_writer_ids": [
+    "14",
+    "27",
+    "28",
+    "30",
+    "46",
+    "49",
+    "52",
+    "62",
+    "66",
+    "8"
+  ]
+}

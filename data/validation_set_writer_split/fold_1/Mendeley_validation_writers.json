@@ -1,0 +1,30 @@
+{
+  "dataset": "Mendeley",
+  "total_writers": 200,
+  "num_test_writers_excluded": 0,
+  "num_eligible_writers": 200,
+  "num_validation_writers": 20,
+  "seed": 42,
+  "validation_writer_ids": [
+    "a_(104)",
+    "a_(105)",
+    "a_(106)",
+    "a_(119)",
+    "a_(12)",
+    "a_(122)",
+    "a_(124)",
+    "a_(130)",
+    "a_(149)",
+    "a_(150)",
+    "a_(152)",
+    "a_(155)",
+    "a_(162)",
+    "a_(197)",
+    "a_(44)",
+    "a_(55)",
+    "a_(66)",
+    "a_(75)",
+    "a_(89)",
+    "a_(9)"
+  ]
+}

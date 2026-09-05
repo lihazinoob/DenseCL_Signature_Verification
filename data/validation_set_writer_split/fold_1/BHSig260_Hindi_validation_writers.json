@@ -1,0 +1,27 @@
+{
+  "dataset": "BHSig260_Hindi",
+  "total_writers": 160,
+  "num_test_writers_excluded": 30,
+  "num_eligible_writers": 100,
+  "num_validation_writers": 15,
+  "seed": 43,
+  "fold": "fold_1",
+  "excluded_prior_fold_writers": 45,
+  "validation_writer_ids": [
+    "102",
+    "110",
+    "129",
+    "14",
+    "20",
+    "42",
+    "54",
+    "60",
+    "61",
+    "66",
+    "69",
+    "75",
+    "8",
+    "84",
+    "89"
+  ]
+}
