@@ -708,22 +708,33 @@ def train(config: TrainConfig = TrainConfig(), time_budget_seconds: float | None
 
 
 if __name__ == "__main__":
-    # Hindi-only, fold_0: the matched-domain SSL pretraining control
-    # (pretrain and finetune on the SAME dataset, no cross-dataset/
-    # cross-script pooling) - see downstream_supervised_learning_approach.md
-    # for why this is a needed control, not just TrainConfig()'s current
-    # default (fold_1, all four datasets pooled - that config is left
-    # untouched here since fold_1's pretraining is a separate, currently
-    # in-flight run on a different machine; changing the dataclass's own
-    # defaults risks desyncing that run if this file is ever synced there).
-    # `fold="fold_0"` selects the SAME writer split (test/validation
-    # writers) already used by every downstream fold_0 result so far
-    # (Hindi/Bengali/CEDAR Step 4), so the 115 training writers this
-    # produces are byte-identical to the pooled fold_0 encoder's Hindi
-    # portion - only the OTHER THREE datasets are removed from the pool,
-    # nothing about Hindi's own split changes.
+    # Bengali-only, fold_0: continuing the matched-domain SSL pretraining
+    # control ([[in-domain-ssl-pretraining-study]]) onto the second dataset,
+    # after Hindi-only/fold_0 (`Hindi_data_ssl/fold_0`) completed cleanly.
+    # Same reasoning as that run - see this module's docstring and
+    # downstream_supervised_learning_approach.md SS16 for why this control is
+    # needed, not just TrainConfig()'s current default (fold_1, all four
+    # datasets pooled - left untouched since fold_1's pretraining is a
+    # separate, currently in-flight run on a different machine; changing the
+    # dataclass's own defaults risks desyncing that run if this file is ever
+    # synced there).
+    # `fold="fold_0"` selects the SAME writer split already used by every
+    # downstream fold_0 result so far (Hindi/Bengali/CEDAR Step 4): Bengali's
+    # fold_0 has 100 total writers, 30 test, 10 validation, 60 train - so
+    # this run's training pool is exactly those 60 writers (byte-identical
+    # to the pooled fold_0 encoder's Bengali portion), only the OTHER THREE
+    # datasets are removed from the pool. Note this pool is markedly smaller
+    # than Hindi's (60 vs 115 training writers) - worth keeping in mind when
+    # comparing this run's loss curves to Hindi-only's.
+    #
+    # NOT smoke-tested on this machine (a separate SSL run - fold_1, pooled -
+    # is already using its GPU); intended to be launched on a different
+    # machine, same as the command handed to the user. Every input path here
+    # (DATA_ROOT, fold-scoped split dirs, dataset_names filter) is identical
+    # in kind to what Hindi-only/fold_0 already exercised successfully, only
+    # the dataset name and run_name differ.
     train(config=TrainConfig(
-        run_name="Hindi_data_ssl/fold_0",
+        run_name="Bengali_data_ssl/fold_0",
         fold="fold_0",
-        dataset_names=("BHSig260_Hindi",),
+        dataset_names=("BHSig260_Bengali",),
     ))
