@@ -158,7 +158,7 @@ CHECKPOINT_EPOCH: int | None = 50  # pinned: the completed 50-epoch DenseCL run 
 # ladder in downstream_supervised_learning_approach.md gets its own
 # directory instead of overwriting the previous one. Change this for
 # every new configuration.
-RUN_TAG = "step4_frozen_combined_indomain"
+RUN_TAG = "step4_finetuned_combined_indomain"
 
 TRAIN_SEED = 42
 VAL_TUPLES_PER_ANCHOR = 4
@@ -177,19 +177,21 @@ SCALE_ESTIMATION_NUM_QUADRUPLES = 200  # only used when ALPHA > 0.0
 SCALE_ESTIMATION_SEED = 42
 
 # -- Model -----------------------------------------------------------------
-# Step 4, Cell A (FROZEN encoder, only the projector/local_projection
-# heads trainable) - deliberately the STARTING cell for the in-domain
-# study (SS16), not Cell B, per explicit instruction: run frozen first on
-# the Hindi-only encoder to characterize the matched-domain ceiling with
-# zero encoder adaptation, then unfreeze stage4 (Cell B) and finally the
-# full encoder as a follow-up, mirroring how the pooled-encoder Hindi/
-# Bengali work itself progressed (Cell A before Cell B) rather than
-# skipping straight to Cell B the way CEDAR/Bengali's re-sweep did (those
-# skipped Cell A because the frozen-vs-fine-tuned question was already
-# settled from Hindi/Bengali's own pooled-encoder runs - here the question
-# being asked is different: how does a matched-domain encoder perform at
-# EACH capacity level, so the ladder is walked again from the bottom).
-TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ()
+# Step 4, Cell B (stage4 of the encoder UNFROZEN, same as every prior
+# Cell B run) - the second rung of the in-domain study's ladder (SS16),
+# run immediately after Cell A (`step4_frozen_combined_indomain`, still
+# in progress on the local machine as this config was written - NOT
+# smoke-tested here for that reason; every path/setting below is
+# otherwise identical in kind to what Cell A already exercised
+# successfully, only TRAINABLE_ENCODER_STAGES and RUN_TAG differ).
+# Same Hindi-only SSL encoder (RUN_NAME), same fold_0 writer split, same
+# MARGIN_M_COMBINED/MARGIN_N_COMBINED as Cell A - deliberately NOT
+# re-swept, since the margins were computed against the raw SSL
+# checkpoint's own embedding space (see the margin comment below), which
+# doesn't change between Cell A and Cell B (only which parameters get
+# gradients during training differs, not what the encoder produces before
+# any of this run's own training starts).
+TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ("stage4",)
 PROJECTOR_HIDDEN_DIM = 256
 EMBEDDING_DIM = 256
 NORM_TYPE = "batch"
