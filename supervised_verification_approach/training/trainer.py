@@ -136,8 +136,16 @@ from protocol import (  # noqa: E402
 )
 
 # -- Dataset / SSL checkpoint --------------------------------------------
-DATASET_NAME = "BHSig260_Hindi"
-RUN_NAME = "densecl_pretrain_v1"
+# Which K-fold CV fold's writer split AND SSL encoder to use - both the
+# downstream writer split (`get_writer_split(..., fold=FOLD)`) and the SSL
+# checkpoint (`RUN_NAME` below) must come from the SAME fold, or the
+# encoder would have been pretrained on writers this run then treats as
+# held-out test/validation (or vice versa) - see `create_cv_fold_split.py`
+# and downstream_supervised_learning_approach.md's K-fold CV section.
+FOLD = "fold_0"
+
+DATASET_NAME = "CEDAR"
+RUN_NAME = "all_data_ssl/fold_0"  # fold_0's SSL encoder - byte-identical weights to the original "densecl_pretrain_v1" (same run, relocated into the fold-scoped layout), used here under its fold-labeled name for consistency with future folds
 CHECKPOINT_EPOCH: int | None = 50  # pinned: the completed 50-epoch DenseCL run
 
 # Names this run's own results folder, so each rung of the experiment
@@ -163,11 +171,20 @@ SCALE_ESTIMATION_NUM_QUADRUPLES = 200  # only used when ALPHA > 0.0
 SCALE_ESTIMATION_SEED = 42
 
 # -- Model -----------------------------------------------------------------
-# Step 4, Cell B: fine-tuned encoder, Step 3a's setting (`stage4` unfrozen)
-# - this is the ladder's actual gate, combined distance on top of an
-# encoder that can also adapt, compared against Step 3a's 94.38%. Cell A
-# (frozen, `TRAINABLE_ENCODER_STAGES=()`, `RUN_TAG="step4_frozen_combined"`)
-# already ran - see downstream_supervised_learning_approach.md SS10.
+# Step 4, Cell B: encoder `stage4` unfrozen - the thesis's primary path
+# (the dense branch must be trainable), established on Hindi and Bengali
+# (SS13-14) as the configuration that should be reported, not the frozen
+# control. First supervised run of any kind on CEDAR - no Step 3a, Cell A,
+# or prior Cell B result exists for this dataset to fall back on, so this
+# goes straight to Cell B with CEDAR's own swept margins (SS14.6's lesson
+# already learned: borrowing another dataset's margins produces a
+# training-dynamics failure mode worth avoiding from the start, not
+# discovering after the fact). CEDAR's fold_0 split is smaller than either
+# BHSig260 dataset's: 35 train / 5 validation / 15 test (55 total) - fewer
+# training writers than Bengali's 60 and roughly a third of Hindi's 115,
+# and HALF Bengali's validation-writer count, so expect Cause 1/Cause 2
+# style effects (SS14.2) - threshold-transfer noise and a lower fine-tuning
+# ceiling - to bite harder here, not as a sign of a broken run.
 TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ("stage4",)
 PROJECTOR_HIDDEN_DIM = 256
 EMBEDDING_DIM = 256
@@ -203,25 +220,54 @@ INTER_LOSS_WEIGHT = 1.0
 MARGIN_M = 0.46
 MARGIN_N = 0.96
 
-# Only used when LOSS_TYPE == "double_margin_combined". Chosen by
-# `sweep_margins_combined.py --step3_run_tag step3a_doublemargin_stage4`
-# on BHSig260_Hindi validation writers (2026-09-04), using Step 3a's
-# fine-tuned encoder + a FRESH global projector + a FRESH local
-# projection (the exact state a real Step 4 run starts from - see that
-# script's docstring): genuine-pair combined-distance median 0.342,
-# negative-pair median 0.697. Do NOT reuse MARGIN_M/MARGIN_N above - the
-# combined distance has a different composition and scale than pure
-# global-embedding distance.
-MARGIN_M_COMBINED = 0.34
-MARGIN_N_COMBINED = 0.70
+# Only used when LOSS_TYPE == "double_margin_combined".
+#
+# HINDI's margins (used for both the Hindi and the first Bengali Cell A/
+# Cell B runs) were 0.34/0.70, from `sweep_margins_combined.py
+# --step3_run_tag step3a_doublemargin_stage4` on BHSig260_Hindi validation
+# writers (2026-09-04), using Step 3a's fine-tuned encoder + a FRESH
+# global projector + a FRESH local projection as the proxy state.
+#
+# BENGALI-SPECIFIC RE-SWEEP (2026-09-06): Bengali has no Step 3a run (it
+# went straight from SSL pretraining to Step 4), so
+# `sweep_margins_combined.py --dataset BHSig260_Bengali
+# --skip_step3_encoder` used the raw SSL-pretrained encoder + FRESH
+# projector + FRESH local projection as the proxy instead - which is
+# actually a more literal match to what this file's real Step 4 run
+# starts from than Hindi's Step-3a-warmed proxy was (RUN_NAME above is
+# always the raw SSL checkpoint, never a Step 3a checkpoint). Result on
+# Bengali/fold_0 validation writers: genuine-pair combined-distance median
+# 0.2685, negative-pair median 0.5254 (49.9%/50.0% active fraction).
+# Rounded to MARGIN_M_COMBINED=0.27, MARGIN_N_COMBINED=0.53. Fixing the
+# margin fixed threshold-transfer stability cleanly but NOT the underlying
+# Hindi-Bengali recognition-quality gap (SS14.7) - keep that nuance in
+# mind before assuming a CEDAR-specific sweep alone will "solve" anything
+# beyond calibration.
+#
+# CEDAR-SPECIFIC SWEEP (2026-09-06): CEDAR also has no Step 3a run, so
+# `sweep_margins_combined.py --dataset CEDAR --skip_step3_encoder` (same
+# raw-SSL-encoder proxy as Bengali's). Only 5 validation writers (1,440
+# pair records) - the smallest validation-writer proxy sample swept so
+# far. Result: genuine-pair combined-distance median 0.3342, negative-pair
+# median 0.6692 (exactly 50.0%/50.0% active fraction). Rounded to
+# MARGIN_M_COMBINED=0.33, MARGIN_N_COMBINED=0.67. As always: watch
+# `positive_active_rate`/`negative_active_rate` in the first 1-2 epochs -
+# the proxy is a starting guess, not a settled value, and with only 5
+# validation writers this proxy is measured on a thinner sample than
+# either BHSig260 dataset's sweep was.
+MARGIN_M_COMBINED = 0.33
+MARGIN_N_COMBINED = 0.67
 
 # -- Optimizer -----------------------------------------------------------------
 BATCH_SIZE = 8
 LEARNING_RATE = 1e-4  # head (projector) learning rate - unchanged from Steps 1-2
 # Only used when TRAINABLE_ENCODER_STAGES is non-empty. ~10x lower than
 # LEARNING_RATE: these weights already encode 50 epochs of DenseCL
-# pretraining, and a large step on a 115-writer supervised set risks
-# undoing that faster than it improves verification.
+# pretraining, and a large step on a small supervised set (115 writers for
+# Hindi, 60 for Bengali, only 35 for CEDAR) risks undoing that faster than
+# it improves verification. Kept unchanged across all three datasets for
+# comparability, even though CEDAR's training pool - the smallest yet -
+# would arguably justify going lower still.
 ENCODER_LEARNING_RATE = 1e-5
 WEIGHT_DECAY = 1e-4
 NUM_EPOCHS = 50  # generous ceiling; PATIENCE is what actually ends the run
@@ -237,7 +283,7 @@ PERIODIC_SAVE_FREQUENCY = 1  # save every epoch's checkpoint, not just the best 
 PATIENCE = 10
 MIN_EPOCHS = 15
 
-RESULTS_DIR = SUPERVISED_DIR / "results" / "all_data_ssl" / DATASET_NAME / RUN_TAG
+RESULTS_DIR = SUPERVISED_DIR / "results" / "all_data_ssl" / FOLD / DATASET_NAME / RUN_TAG
 HISTORY_CSV_PATH = RESULTS_DIR / "training_history.csv"
 MODEL_DIR = RESULTS_DIR / "checkpoints"
 
@@ -277,7 +323,7 @@ def train() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
-    split = get_writer_split(DATASET_NAME)
+    split = get_writer_split(DATASET_NAME, fold=FOLD)
     print(
         f"Writers - train: {len(split.train_writer_ids)} | "
         f"val: {len(split.validation_writer_ids)} | "

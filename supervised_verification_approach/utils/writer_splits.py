@@ -34,7 +34,9 @@ SELF_SUPERVISED_DIR = DENSECL_APPROACH_DIR / "self_supervised_approach"
 
 sys.path.insert(0, str(SELF_SUPERVISED_DIR / "utils"))
 
+from test_set_creation import OUTPUT_DIR as TEST_SPLIT_ROOT  # noqa: E402
 from test_set_creation import list_writer_ids, load_test_writer_ids  # noqa: E402
+from validation_set_creation import OUTPUT_DIR as VALIDATION_SPLIT_ROOT  # noqa: E402
 from validation_set_creation import load_validation_writer_ids  # noqa: E402
 
 DATA_ROOT = DENSECL_APPROACH_DIR / "data" / "all"
@@ -56,11 +58,18 @@ class WriterSplit:
         return len(self.train_writer_ids) + len(self.validation_writer_ids) + len(self.test_writer_ids)
 
 
-def get_writer_split(dataset_name: str) -> WriterSplit:
+def get_writer_split(dataset_name: str, fold: str | None = None) -> WriterSplit:
     """Derive the downstream train/validation/test writer split for one
     dataset. Training writers are computed, not stored - they're simply
     whichever writers are on disk and not claimed by the test or
-    validation split files."""
+    validation split files.
+
+    `fold`, if given (e.g. `"fold_0"`, `"fold_1"`), reads
+    `data/test_set_writer_split/<fold>/<dataset>_test_writers.json` and
+    `data/validation_set_writer_split/<fold>/<dataset>_validation_writers.json`
+    instead of the top-level, non-fold split files - see
+    `self_supervised_approach/utils/create_cv_fold_split.py` for how a
+    fold's splits are generated (K-fold CV)."""
     if dataset_name not in SUPPORTED_DATASETS:
         raise ValueError(
             f"'{dataset_name}' has no genuine/forged labels and cannot be used for "
@@ -71,17 +80,24 @@ def get_writer_split(dataset_name: str) -> WriterSplit:
     if not dataset_dir.is_dir():
         raise FileNotFoundError(f"Dataset folder not found: {dataset_dir}")
 
+    test_split_dir = TEST_SPLIT_ROOT / fold if fold else TEST_SPLIT_ROOT
+    validation_split_dir = VALIDATION_SPLIT_ROOT / fold if fold else VALIDATION_SPLIT_ROOT
+
     all_writer_ids = set(list_writer_ids(dataset_dir))
-    test_writer_ids = load_test_writer_ids(dataset_name)
-    validation_writer_ids = load_validation_writer_ids(dataset_name)
+    test_writer_ids = load_test_writer_ids(dataset_name, split_dir=test_split_dir)
+    validation_writer_ids = load_validation_writer_ids(dataset_name, split_dir=validation_split_dir)
 
     if not test_writer_ids:
         raise ValueError(
-            f"No test split found for '{dataset_name}' - run test_set_creation.py first."
+            f"No test split found for '{dataset_name}'"
+            f"{f' under fold {fold!r}' if fold else ''} - run test_set_creation.py "
+            f"(or create_cv_fold_split.py for a fold) first."
         )
     if not validation_writer_ids:
         raise ValueError(
-            f"No validation split found for '{dataset_name}' - run validation_set_creation.py first."
+            f"No validation split found for '{dataset_name}'"
+            f"{f' under fold {fold!r}' if fold else ''} - run validation_set_creation.py "
+            f"(or create_cv_fold_split.py for a fold) first."
         )
 
     overlap = test_writer_ids & validation_writer_ids

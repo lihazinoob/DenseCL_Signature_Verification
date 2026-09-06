@@ -52,7 +52,9 @@ from protocol import (  # noqa: E402
     run_full_protocol,
 )
 
-SSL_RUN_NAME = "densecl_pretrain_v1"
+# SSL run name is derived per-fold at call time (`f"all_data_ssl/{args.fold}"`)
+# - see main(). fold_0's weights are byte-identical to the original
+# "densecl_pretrain_v1" (same run, relocated into the fold-scoped layout).
 SSL_CHECKPOINT_EPOCH = 50
 
 # More draws than the per-epoch monitoring budget - this runs once, so the
@@ -89,17 +91,21 @@ def _show(title: str, summary: dict) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("run_tag", help="results/all_data_ssl/<dataset>/<run_tag>/")
+    parser.add_argument("run_tag", help="results/all_data_ssl/<fold>/<dataset>/<run_tag>/")
     parser.add_argument("--dataset", default="BHSig260_Hindi")
+    parser.add_argument("--fold", default="fold_0",
+                         help="K-fold CV fold - selects both the writer split "
+                              "(data/*_writer_split/<fold>/) and the SSL encoder "
+                              "(self_supervised_approach/results/training/all_data_ssl/<fold>/)")
     parser.add_argument("--k", type=int, default=8, help="number of reference signatures (SURDS uses 8)")
     parser.add_argument("--checkpoint", default="best_model.pt")
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    split = get_writer_split(args.dataset)
+    split = get_writer_split(args.dataset, fold=args.fold)
     dataset_dir = DATA_ROOT / args.dataset
 
-    run_dir = SUPERVISED_DIR / "results" / "all_data_ssl" / args.dataset / args.run_tag
+    run_dir = SUPERVISED_DIR / "results" / "all_data_ssl" / args.fold / args.dataset / args.run_tag
     checkpoint_path = run_dir / "checkpoints" / args.checkpoint
     if not checkpoint_path.exists():
         raise FileNotFoundError(f"No checkpoint at {checkpoint_path}")
@@ -107,6 +113,7 @@ def main() -> None:
     print(f"Dataset    : {args.dataset}  "
           f"({len(split.train_writer_ids)} train / {len(split.validation_writer_ids)} val / "
           f"{len(split.test_writer_ids)} test writers)")
+    print(f"Fold       : {args.fold}")
     print(f"Run tag    : {args.run_tag}")
     print(f"K          : {args.k}")
 
@@ -120,7 +127,8 @@ def main() -> None:
     uses_combined_distance = "local_projection.weight" in state_dict
     local_embedding_dim = state_dict["local_projection.weight"].shape[0] if uses_combined_distance else None
 
-    model = load_downstream_model(SSL_RUN_NAME, SSL_CHECKPOINT_EPOCH, device, local_embedding_dim=local_embedding_dim)
+    ssl_run_name = f"all_data_ssl/{args.fold}"
+    model = load_downstream_model(ssl_run_name, SSL_CHECKPOINT_EPOCH, device, local_embedding_dim=local_embedding_dim)
     model.load_state_dict(state_dict)
     model.to(device).eval()
     print(f"Checkpoint : {args.checkpoint} from epoch {checkpoint['epoch']} "
@@ -170,6 +178,7 @@ def main() -> None:
     out_path = run_dir / f"test_results_K{args.k}.json"
     out_path.write_text(json.dumps({
         "dataset": args.dataset,
+        "fold": args.fold,
         "run_tag": args.run_tag,
         "checkpoint": args.checkpoint,
         "checkpoint_epoch": checkpoint["epoch"],

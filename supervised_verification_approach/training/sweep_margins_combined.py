@@ -17,8 +17,15 @@ Treat the result as a starting guess, not a settled value - watch
 `positive_active_rate`/`negative_active_rate` in the first 1-2 epochs of
 the real run and adjust if either sits near 0% or 100%.
 
+`--skip_step3_encoder` uses the raw SSL-pretrained encoder instead of a
+Step 3a checkpoint, for datasets with no Step 3a run (e.g. Bengali, which
+went straight from SSL pretraining to Step 4). trainer.py's real Step 4
+run always starts stage4 from the raw SSL checkpoint anyway, so this is
+not a lesser proxy for those datasets.
+
 Usage:
     python sweep_margins_combined.py [--dataset BHSig260_Hindi] [--step3_run_tag step3a_doublemargin_stage4] [--local_dim 128]
+    python sweep_margins_combined.py --dataset BHSig260_Bengali --skip_step3_encoder
 """
 
 from __future__ import annotations
@@ -40,7 +47,7 @@ from embedding_model import load_downstream_model  # noqa: E402
 from fixed_dual_triplet_dataset import build_fixed_triplet_records  # noqa: E402
 from encoding import encode_all_signatures, combined_distance_cached  # noqa: E402
 
-SSL_RUN_NAME = "densecl_pretrain_v1"
+SSL_RUN_NAME = "all_data_ssl/fold_0"  # relocated from "densecl_pretrain_v1" by the fold-scoped layout - byte-identical weights, see trainer.py's RUN_NAME comment
 SSL_CHECKPOINT_EPOCH = 50
 PERCENTILES = (10, 25, 50, 75, 90)
 CANDIDATE_PERCENTILES = (30, 50, 70)
@@ -49,8 +56,19 @@ CANDIDATE_PERCENTILES = (30, 50, 70)
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", default="BHSig260_Hindi")
+    parser.add_argument("--fold", default="fold_0", help="Fold subdirectory the Step 3 checkpoint lives under.")
     parser.add_argument("--step3_run_tag", default="step3a_doublemargin_stage4")
     parser.add_argument("--step3_checkpoint", default="best_model.pt")
+    parser.add_argument(
+        "--skip_step3_encoder", action="store_true",
+        help="Use the raw SSL-pretrained encoder as-is instead of overriding stage4 with a "
+             "Step 3a fine-tuned checkpoint. Use this when no Step 3a run exists for the "
+             "dataset (e.g. Bengali, which went straight from SSL pretraining to Step 4 - "
+             "Step 3a was a Hindi-only exploratory stage). Note that trainer.py's real Step 4 "
+             "run always starts stage4 from this same raw SSL checkpoint regardless of "
+             "dataset, so this is not a lesser proxy - if anything it matches the real start "
+             "state more closely than borrowing another dataset's fine-tuned weights would.",
+    )
     parser.add_argument("--local_dim", type=int, default=128)
     parser.add_argument("--lambda0", type=float, default=1.0)
     parser.add_argument("--sinkhorn_epsilon", type=float, default=0.05)
@@ -60,7 +78,7 @@ def main() -> None:
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    split = get_writer_split(args.dataset)
+    split = get_writer_split(args.dataset, fold=args.fold)
     dataset_dir = DATA_ROOT / args.dataset
 
     # Fresh model: encoder = original SSL checkpoint (stage4 trainable),
@@ -72,20 +90,27 @@ def main() -> None:
         trainable_encoder_stages=("stage4",), local_embedding_dim=args.local_dim,
     )
 
-    step3_checkpoint_path = (
-        SUPERVISED_DIR / "results" / "all_data_ssl" / args.dataset / args.step3_run_tag
-        / "checkpoints" / args.step3_checkpoint
-    )
-    if not step3_checkpoint_path.exists():
-        raise FileNotFoundError(f"No Step 3 checkpoint at {step3_checkpoint_path}")
-    step3_state = torch.load(step3_checkpoint_path, map_location=device)["model_state_dict"]
-    encoder_state = {k[len("encoder."):]: v for k, v in step3_state.items() if k.startswith("encoder.")}
-    missing, unexpected = model.encoder.load_state_dict(encoder_state, strict=True)
-    print(
-        f"Loaded {args.step3_run_tag}'s fine-tuned encoder weights over the SSL checkpoint's "
-        f"(projector + local_projection left at fresh random init). Missing: {len(missing)}, "
-        f"unexpected: {len(unexpected)}"
-    )
+    if args.skip_step3_encoder:
+        print(
+            "Using the raw SSL-pretrained encoder as-is (--skip_step3_encoder) - stage4 not "
+            "yet fine-tuned by any supervised stage. Projector + local_projection are fresh "
+            "random init, same as the Step 3a proxy path."
+        )
+    else:
+        step3_checkpoint_path = (
+            SUPERVISED_DIR / "results" / "all_data_ssl" / args.fold / args.dataset / args.step3_run_tag
+            / "checkpoints" / args.step3_checkpoint
+        )
+        if not step3_checkpoint_path.exists():
+            raise FileNotFoundError(f"No Step 3 checkpoint at {step3_checkpoint_path}")
+        step3_state = torch.load(step3_checkpoint_path, map_location=device)["model_state_dict"]
+        encoder_state = {k[len("encoder."):]: v for k, v in step3_state.items() if k.startswith("encoder.")}
+        missing, unexpected = model.encoder.load_state_dict(encoder_state, strict=True)
+        print(
+            f"Loaded {args.step3_run_tag}'s fine-tuned encoder weights over the SSL checkpoint's "
+            f"(projector + local_projection left at fresh random init). Missing: {len(missing)}, "
+            f"unexpected: {len(unexpected)}"
+        )
     model.eval()
 
     records = build_fixed_triplet_records(
