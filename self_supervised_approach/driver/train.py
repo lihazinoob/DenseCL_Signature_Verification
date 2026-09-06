@@ -122,6 +122,20 @@ class TrainConfig:
     # only iterates the SAVED config's own keys).
     fold: str | None = "fold_1"
 
+    # Which dataset(s) to pretrain on - `None` (the original, and still
+    # default, behavior) pools every dataset under `data/all/` together,
+    # matching every prior SSL run (`densecl_pretrain_v1`, `all_data_ssl/
+    # fold_0`, `all_data_ssl/fold_1`). A tuple like `("BHSig260_Hindi",)`
+    # restricts pretraining to just that dataset - the matched-domain
+    # control (pretrain and finetune on the SAME dataset, no cross-dataset/
+    # cross-script pooling) that isolates domain-transfer effects from the
+    # pretext objective itself. Forwarded to `list_all_signature_paths`/
+    # `SignatureSSLDataset` via `dataset_names` in `build_dataloaders`
+    # below. Tuple (not set) so it stays hashable/comparable for
+    # `_validate_resumed_config`'s equality check and `dataclasses.asdict`'s
+    # CSV-friendly serialization.
+    dataset_names: tuple[str, ...] | None = None
+
     # Real 50-epoch/5-warmup-epoch budget - confirmed via the saved
     # TrainConfig inside fold_0's own checkpoint (`densecl_pretrain_v1`,
     # copied into `all_data_ssl/fold_0`) to be the exact configuration
@@ -253,17 +267,24 @@ def build_dataloaders(config: TrainConfig, starting_epoch: int = 1) -> tuple[Dat
     (`data/test_set_writer_split/<fold>/`, `data/validation_set_writer_split/<fold>/`)
     instead of the top-level, non-fold split files - see `create_cv_fold_split.py`
     for how a fold's splits are generated (K-fold CV, roadmap doc SS on
-    generalization evidence)."""
+    generalization evidence).
+
+    `config.dataset_names`, if set, restricts both the training and
+    validation pools to only those dataset(s) instead of pooling every
+    dataset under `data/all/` - the single-dataset SSL pretraining case."""
     test_split_dir = TEST_SPLIT_ROOT / config.fold if config.fold else TEST_SPLIT_ROOT
     validation_split_dir = VALIDATION_SPLIT_ROOT / config.fold if config.fold else VALIDATION_SPLIT_ROOT
+    wanted_datasets = set(config.dataset_names) if config.dataset_names else None
 
     validation_writer_ids = {
         dataset_name: load_validation_writer_ids(dataset_name, split_dir=validation_split_dir)
         for dataset_name in VALIDATION_WRITER_COUNTS
+        if wanted_datasets is None or dataset_name in wanted_datasets
     }
 
     train_dataset = SignatureSSLDataset(
         DATA_ROOT, extra_exclude_writer_ids=validation_writer_ids, test_split_dir=test_split_dir,
+        dataset_names=wanted_datasets,
     )
 
     validation_paths = list_specific_writer_signature_paths(DATA_ROOT, validation_writer_ids)
@@ -614,6 +635,7 @@ def train(config: TrainConfig = TrainConfig(), time_budget_seconds: float | None
 
     print(f"Run             : {config.run_name}")
     print(f"CV fold         : {config.fold if config.fold else '(none - top-level split)'}")
+    print(f"Dataset(s)      : {', '.join(config.dataset_names) if config.dataset_names else 'all four, pooled'}")
     print(f"Device          : {device}")
     print(f"Dataset         : {len(train_loader.dataset)} train / {len(validation_loader.dataset)} validation (writer-level, fixed split)")
     print(f"Epochs          : {config.num_epochs} (starting at epoch {starting_epoch})")
@@ -686,4 +708,22 @@ def train(config: TrainConfig = TrainConfig(), time_budget_seconds: float | None
 
 
 if __name__ == "__main__":
-    train()
+    # Hindi-only, fold_0: the matched-domain SSL pretraining control
+    # (pretrain and finetune on the SAME dataset, no cross-dataset/
+    # cross-script pooling) - see downstream_supervised_learning_approach.md
+    # for why this is a needed control, not just TrainConfig()'s current
+    # default (fold_1, all four datasets pooled - that config is left
+    # untouched here since fold_1's pretraining is a separate, currently
+    # in-flight run on a different machine; changing the dataclass's own
+    # defaults risks desyncing that run if this file is ever synced there).
+    # `fold="fold_0"` selects the SAME writer split (test/validation
+    # writers) already used by every downstream fold_0 result so far
+    # (Hindi/Bengali/CEDAR Step 4), so the 115 training writers this
+    # produces are byte-identical to the pooled fold_0 encoder's Hindi
+    # portion - only the OTHER THREE datasets are removed from the pool,
+    # nothing about Hindi's own split changes.
+    train(config=TrainConfig(
+        run_name="Hindi_data_ssl/fold_0",
+        fold="fold_0",
+        dataset_names=("BHSig260_Hindi",),
+    ))

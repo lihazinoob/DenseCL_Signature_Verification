@@ -144,15 +144,21 @@ from protocol import (  # noqa: E402
 # and downstream_supervised_learning_approach.md's K-fold CV section.
 FOLD = "fold_0"
 
-DATASET_NAME = "CEDAR"
-RUN_NAME = "all_data_ssl/fold_0"  # fold_0's SSL encoder - byte-identical weights to the original "densecl_pretrain_v1" (same run, relocated into the fold-scoped layout), used here under its fold-labeled name for consistency with future folds
-CHECKPOINT_EPOCH: int | None = 50  # pinned: the completed 50-epoch DenseCL run
+DATASET_NAME = "BHSig260_Hindi"
+# In-domain/matched-domain study (SS16): the encoder pretrained on ONLY
+# Hindi's own fold_0 writers (`Hindi_data_ssl/fold_0`), not the pooled
+# four-dataset encoder every prior Hindi/Bengali/CEDAR run used. Same
+# fold_0 downstream writer split as always (115/15/30) - only the SSL
+# encoder's training data differs (Hindi-only vs. pooled), isolating
+# domain-transfer effects from the pretext objective itself.
+RUN_NAME = "Hindi_data_ssl/fold_0"
+CHECKPOINT_EPOCH: int | None = 50  # pinned: the completed 50-epoch DenseCL run - kept at 50 after reconsidering (SS16.5): the val-loss-minimizing epoch (48) is inside this run's own noise floor, not a real improvement over 50
 
 # Names this run's own results folder, so each rung of the experiment
 # ladder in downstream_supervised_learning_approach.md gets its own
 # directory instead of overwriting the previous one. Change this for
 # every new configuration.
-RUN_TAG = "step4_finetuned_combined"
+RUN_TAG = "step4_frozen_combined_indomain"
 
 TRAIN_SEED = 42
 VAL_TUPLES_PER_ANCHOR = 4
@@ -171,21 +177,19 @@ SCALE_ESTIMATION_NUM_QUADRUPLES = 200  # only used when ALPHA > 0.0
 SCALE_ESTIMATION_SEED = 42
 
 # -- Model -----------------------------------------------------------------
-# Step 4, Cell B: encoder `stage4` unfrozen - the thesis's primary path
-# (the dense branch must be trainable), established on Hindi and Bengali
-# (SS13-14) as the configuration that should be reported, not the frozen
-# control. First supervised run of any kind on CEDAR - no Step 3a, Cell A,
-# or prior Cell B result exists for this dataset to fall back on, so this
-# goes straight to Cell B with CEDAR's own swept margins (SS14.6's lesson
-# already learned: borrowing another dataset's margins produces a
-# training-dynamics failure mode worth avoiding from the start, not
-# discovering after the fact). CEDAR's fold_0 split is smaller than either
-# BHSig260 dataset's: 35 train / 5 validation / 15 test (55 total) - fewer
-# training writers than Bengali's 60 and roughly a third of Hindi's 115,
-# and HALF Bengali's validation-writer count, so expect Cause 1/Cause 2
-# style effects (SS14.2) - threshold-transfer noise and a lower fine-tuning
-# ceiling - to bite harder here, not as a sign of a broken run.
-TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ("stage4",)
+# Step 4, Cell A (FROZEN encoder, only the projector/local_projection
+# heads trainable) - deliberately the STARTING cell for the in-domain
+# study (SS16), not Cell B, per explicit instruction: run frozen first on
+# the Hindi-only encoder to characterize the matched-domain ceiling with
+# zero encoder adaptation, then unfreeze stage4 (Cell B) and finally the
+# full encoder as a follow-up, mirroring how the pooled-encoder Hindi/
+# Bengali work itself progressed (Cell A before Cell B) rather than
+# skipping straight to Cell B the way CEDAR/Bengali's re-sweep did (those
+# skipped Cell A because the frozen-vs-fine-tuned question was already
+# settled from Hindi/Bengali's own pooled-encoder runs - here the question
+# being asked is different: how does a matched-domain encoder perform at
+# EACH capacity level, so the ladder is walked again from the bottom).
+TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ()
 PROJECTOR_HIDDEN_DIM = 256
 EMBEDDING_DIM = 256
 NORM_TYPE = "batch"
@@ -255,8 +259,26 @@ MARGIN_N = 0.96
 # the proxy is a starting guess, not a settled value, and with only 5
 # validation writers this proxy is measured on a thinner sample than
 # either BHSig260 dataset's sweep was.
-MARGIN_M_COMBINED = 0.33
-MARGIN_N_COMBINED = 0.67
+#
+# IN-DOMAIN HINDI SWEEP (2026-09-06, SS16): re-swept against the NEW
+# Hindi-only SSL encoder (`Hindi_data_ssl/fold_0`, RUN_NAME above) rather
+# than reusing the original 0.34/0.70 (which was swept on the POOLED
+# encoder's Step-3a-fine-tuned proxy - a different model). `sweep_margins_
+# combined.py --dataset BHSig260_Hindi --skip_step3_encoder --ssl_run_name
+# Hindi_data_ssl/fold_0` (Hindi has no Step 3a run built on THIS encoder
+# either, so the same raw-SSL-encoder proxy as Bengali/CEDAR is used here,
+# not the original Hindi sweep's Step-3a-warmed one). 15 validation
+# writers, 4,320 pair records. Result: genuine-pair combined-distance
+# median 0.3402, negative-pair median 0.7129 (exactly 50.0%/50.0% active
+# fraction). Rounded to MARGIN_M_COMBINED=0.34, MARGIN_N_COMBINED=0.71 -
+# notably close to the original pooled-encoder Hindi sweep (0.34/0.70,
+# from a differently-warmed proxy), suggesting Hindi's own distance scale
+# is fairly stable regardless of whether the encoder saw only Hindi or all
+# four datasets during pretraining. Do not read too much into that from
+# margins alone, though - it's a proxy-state observation, not yet a
+# downstream result.
+MARGIN_M_COMBINED = 0.34
+MARGIN_N_COMBINED = 0.71
 
 # -- Optimizer -----------------------------------------------------------------
 BATCH_SIZE = 8
@@ -283,7 +305,14 @@ PERIODIC_SAVE_FREQUENCY = 1  # save every epoch's checkpoint, not just the best 
 PATIENCE = 10
 MIN_EPOCHS = 15
 
-RESULTS_DIR = SUPERVISED_DIR / "results" / "all_data_ssl" / FOLD / DATASET_NAME / RUN_TAG
+# Keyed on RUN_NAME (not a hardcoded "all_data_ssl" segment) so results
+# land under whichever SSL run actually produced the encoder - for every
+# pooled-encoder run RUN_NAME == "all_data_ssl/<fold>" already, so this is
+# byte-identical to the old hardcoded path for all of them; for a
+# single-dataset SSL run (e.g. "Hindi_data_ssl/fold_0", SS16) it correctly
+# lands under that run's own name instead of the misleading "all_data_ssl"
+# label.
+RESULTS_DIR = SUPERVISED_DIR / "results" / RUN_NAME / DATASET_NAME / RUN_TAG
 HISTORY_CSV_PATH = RESULTS_DIR / "training_history.csv"
 MODEL_DIR = RESULTS_DIR / "checkpoints"
 

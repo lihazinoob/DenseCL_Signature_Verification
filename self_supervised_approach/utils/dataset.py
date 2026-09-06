@@ -47,6 +47,7 @@ def list_all_signature_paths(
     exclude_test_writers: bool = True,
     extra_exclude_writer_ids: dict[str, set[str]] | None = None,
     test_split_dir: Path = TEST_SPLIT_ROOT,
+    dataset_names: set[str] | None = None,
 ) -> list[Path]:
     """Every signature image path under `data_root/<dataset>/<writer>/<file>`.
 
@@ -66,12 +67,20 @@ def list_all_signature_paths(
     IDs per dataset (e.g. `{"CEDAR": {"3", "7"}}`) - used to also strip the
     SSL validation writers (`validation_set_creation.py`) out of the
     training pool, on top of the test writers.
+
+    `dataset_names`, if given, restricts the walk to only these dataset
+    subdirectory names (e.g. `{"BHSig260_Hindi"}`) instead of pooling every
+    dataset under `data_root` - the single-dataset SSL pretraining case
+    (matched-domain pretrain+finetune control), as opposed to the default
+    `None` (pool everything), which is what every prior SSL run used.
     """
     data_root = Path(data_root)
     paths = []
     excluded_writer_counts: dict[str, int] = {}
 
     for dataset_dir in sorted(p for p in data_root.iterdir() if p.is_dir()):
+        if dataset_names is not None and dataset_dir.name not in dataset_names:
+            continue
         test_writer_ids = load_test_writer_ids(dataset_dir.name, split_dir=test_split_dir) if exclude_test_writers else set()
         extra_ids = (extra_exclude_writer_ids or {}).get(dataset_dir.name, set())
         skip_ids = test_writer_ids | extra_ids
@@ -139,6 +148,7 @@ class SignatureSSLDataset(Dataset):
         extra_exclude_writer_ids: dict[str, set[str]] | None = None,
         image_paths_override: list[Path] | None = None,
         test_split_dir: Path = TEST_SPLIT_ROOT,
+        dataset_names: set[str] | None = None,
     ) -> None:
         """`image_paths_override`, if given, bypasses the normal directory
         walk entirely and uses exactly this list of paths - the mechanism
@@ -146,7 +156,10 @@ class SignatureSSLDataset(Dataset):
         `list_specific_writer_signature_paths`'s output (an "only these
         writers" pool, not an "everything except" one). `test_split_dir`
         is forwarded to `list_all_signature_paths` unchanged - see there
-        for the K-fold CV use case."""
+        for the K-fold CV use case. `dataset_names` is also forwarded
+        unchanged - see `list_all_signature_paths` for the single-dataset
+        SSL pretraining use case; ignored when `image_paths_override` is
+        given, since that path already specifies its own exact pool."""
         if image_paths_override is not None:
             self.image_paths = image_paths_override
         else:
@@ -155,6 +168,7 @@ class SignatureSSLDataset(Dataset):
                 exclude_test_writers=exclude_test_writers,
                 extra_exclude_writer_ids=extra_exclude_writer_ids,
                 test_split_dir=test_split_dir,
+                dataset_names=dataset_names,
             )
         if not self.image_paths:
             raise FileNotFoundError(f"No signature images found under {data_root}")

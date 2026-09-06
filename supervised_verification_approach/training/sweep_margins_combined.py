@@ -23,9 +23,17 @@ went straight from SSL pretraining to Step 4). trainer.py's real Step 4
 run always starts stage4 from the raw SSL checkpoint anyway, so this is
 not a lesser proxy for those datasets.
 
+`--ssl_run_name` selects WHICH SSL pretraining run's encoder to measure
+against - defaults to the pooled `all_data_ssl/fold_0` run every prior
+sweep used. Pass a single-dataset SSL run (e.g. `Hindi_data_ssl/fold_0`)
+for the matched-domain/in-domain study: the margins must be measured on
+the SAME encoder `trainer.py`'s `RUN_NAME` will actually load downstream,
+or the sweep is measuring the wrong model's distance distribution.
+
 Usage:
     python sweep_margins_combined.py [--dataset BHSig260_Hindi] [--step3_run_tag step3a_doublemargin_stage4] [--local_dim 128]
     python sweep_margins_combined.py --dataset BHSig260_Bengali --skip_step3_encoder
+    python sweep_margins_combined.py --dataset BHSig260_Hindi --skip_step3_encoder --ssl_run_name Hindi_data_ssl/fold_0
 """
 
 from __future__ import annotations
@@ -57,6 +65,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", default="BHSig260_Hindi")
     parser.add_argument("--fold", default="fold_0", help="Fold subdirectory the Step 3 checkpoint lives under.")
+    parser.add_argument(
+        "--ssl_run_name", default=SSL_RUN_NAME,
+        help="Which SSL pretraining run's encoder to use as the proxy's starting point (before "
+             "any --skip_step3_encoder / Step-3 override). Defaults to the pooled all_data_ssl "
+             "run every prior sweep used; pass a single-dataset run (e.g. 'Hindi_data_ssl/fold_0') "
+             "for a matched-domain/in-domain sweep - the margins must come from the SAME encoder "
+             "that trainer.py's RUN_NAME will actually load, or the proxy measurement is for the "
+             "wrong model.",
+    )
     parser.add_argument("--step3_run_tag", default="step3a_doublemargin_stage4")
     parser.add_argument("--step3_checkpoint", default="best_model.pt")
     parser.add_argument(
@@ -86,7 +103,7 @@ def main() -> None:
     # docstring for why the encoder gets overwritten next but the two
     # heads deliberately do not.
     model = load_downstream_model(
-        SSL_RUN_NAME, SSL_CHECKPOINT_EPOCH, device,
+        args.ssl_run_name, SSL_CHECKPOINT_EPOCH, device,
         trainable_encoder_stages=("stage4",), local_embedding_dim=args.local_dim,
     )
 

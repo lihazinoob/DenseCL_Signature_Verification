@@ -52,7 +52,8 @@ from protocol import (  # noqa: E402
     run_full_protocol,
 )
 
-# SSL run name is derived per-fold at call time (`f"all_data_ssl/{args.fold}"`)
+# SSL run name defaults to the pooled encoder, derived per-fold at call
+# time (`f"all_data_ssl/{args.fold}"`) unless overridden by --ssl_run_name
 # - see main(). fold_0's weights are byte-identical to the original
 # "densecl_pretrain_v1" (same run, relocated into the fold-scoped layout).
 SSL_CHECKPOINT_EPOCH = 50
@@ -91,21 +92,33 @@ def _show(title: str, summary: dict) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("run_tag", help="results/all_data_ssl/<fold>/<dataset>/<run_tag>/")
+    parser.add_argument("run_tag", help="results/<ssl_run_name>/<dataset>/<run_tag>/")
     parser.add_argument("--dataset", default="BHSig260_Hindi")
     parser.add_argument("--fold", default="fold_0",
-                         help="K-fold CV fold - selects both the writer split "
-                              "(data/*_writer_split/<fold>/) and the SSL encoder "
-                              "(self_supervised_approach/results/training/all_data_ssl/<fold>/)")
+                         help="K-fold CV fold - selects the writer split "
+                              "(data/*_writer_split/<fold>/); also feeds the default "
+                              "--ssl_run_name if that is not given explicitly.")
+    parser.add_argument(
+        "--ssl_run_name", default=None,
+        help="Which SSL pretraining run's encoder produced this checkpoint - MUST match "
+             "trainer.py's RUN_NAME for the run being evaluated, or this loads the wrong "
+             "encoder weights silently (the checkpoint's own trained heads would still load "
+             "correctly, but every distance computed by the shared/frozen encoder layers "
+             "would be wrong). Defaults to the pooled 'all_data_ssl/<fold>' run, matching "
+             "every trainer.py run before SS16; pass e.g. 'Hindi_data_ssl/fold_0' for a "
+             "single-dataset SSL run's checkpoint. Also determines the results directory "
+             "(results/<ssl_run_name>/<dataset>/<run_tag>/), matching trainer.py's RESULTS_DIR.",
+    )
     parser.add_argument("--k", type=int, default=8, help="number of reference signatures (SURDS uses 8)")
     parser.add_argument("--checkpoint", default="best_model.pt")
     args = parser.parse_args()
+    ssl_run_name = args.ssl_run_name or f"all_data_ssl/{args.fold}"
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     split = get_writer_split(args.dataset, fold=args.fold)
     dataset_dir = DATA_ROOT / args.dataset
 
-    run_dir = SUPERVISED_DIR / "results" / "all_data_ssl" / args.fold / args.dataset / args.run_tag
+    run_dir = SUPERVISED_DIR / "results" / ssl_run_name / args.dataset / args.run_tag
     checkpoint_path = run_dir / "checkpoints" / args.checkpoint
     if not checkpoint_path.exists():
         raise FileNotFoundError(f"No checkpoint at {checkpoint_path}")
@@ -115,6 +128,7 @@ def main() -> None:
           f"{len(split.test_writer_ids)} test writers)")
     print(f"Fold       : {args.fold}")
     print(f"Run tag    : {args.run_tag}")
+    print(f"SSL run    : {ssl_run_name}")
     print(f"K          : {args.k}")
 
     checkpoint = torch.load(checkpoint_path, map_location=device)
@@ -127,7 +141,6 @@ def main() -> None:
     uses_combined_distance = "local_projection.weight" in state_dict
     local_embedding_dim = state_dict["local_projection.weight"].shape[0] if uses_combined_distance else None
 
-    ssl_run_name = f"all_data_ssl/{args.fold}"
     model = load_downstream_model(ssl_run_name, SSL_CHECKPOINT_EPOCH, device, local_embedding_dim=local_embedding_dim)
     model.load_state_dict(state_dict)
     model.to(device).eval()
