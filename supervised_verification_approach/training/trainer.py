@@ -158,7 +158,7 @@ CHECKPOINT_EPOCH: int | None = 50  # pinned: the completed 50-epoch DenseCL run 
 # ladder in downstream_supervised_learning_approach.md gets its own
 # directory instead of overwriting the previous one. Change this for
 # every new configuration.
-RUN_TAG = "step4_finetuned_combined_indomain"
+RUN_TAG = "step4_fullunfrozen_combined_indomain"
 
 TRAIN_SEED = 42
 VAL_TUPLES_PER_ANCHOR = 4
@@ -177,21 +177,34 @@ SCALE_ESTIMATION_NUM_QUADRUPLES = 200  # only used when ALPHA > 0.0
 SCALE_ESTIMATION_SEED = 42
 
 # -- Model -----------------------------------------------------------------
-# Step 4, Cell B (stage4 of the encoder UNFROZEN, same as every prior
-# Cell B run) - the second rung of the in-domain study's ladder (SS16),
-# run immediately after Cell A (`step4_frozen_combined_indomain`, still
-# in progress on the local machine as this config was written - NOT
-# smoke-tested here for that reason; every path/setting below is
-# otherwise identical in kind to what Cell A already exercised
-# successfully, only TRAINABLE_ENCODER_STAGES and RUN_TAG differ).
+# Step 4, Cell C - the FULL encoder unfrozen (stem + all four stages), the
+# third and final rung of the in-domain study's ladder (SS16): the "ultimate
+# capability" run - how well does this whole pipeline do when the matched-
+# domain encoder is given every parameter to adapt with, not just stage4.
+# No project precedent for this cell yet (grepped the roadmap doc - only
+# frozen/stage4 configs exist so far for any dataset), so this is the first
+# full-unfreeze run in the whole ladder, in-domain or pooled.
+#
 # Same Hindi-only SSL encoder (RUN_NAME), same fold_0 writer split, same
-# MARGIN_M_COMBINED/MARGIN_N_COMBINED as Cell A - deliberately NOT
-# re-swept, since the margins were computed against the raw SSL
-# checkpoint's own embedding space (see the margin comment below), which
-# doesn't change between Cell A and Cell B (only which parameters get
-# gradients during training differs, not what the encoder produces before
-# any of this run's own training starts).
-TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ("stage4",)
+# MARGIN_M_COMBINED/MARGIN_N_COMBINED as Cell A/B - deliberately NOT
+# re-swept, for the same reason as Cell B: the margins were computed
+# against the raw SSL checkpoint's OWN embedding space (see the margin
+# comment below), which is identical for Cell A/B/C - only which
+# parameters get gradients during training differs, never what the
+# encoder produces before this run's own training starts.
+#
+# NOT smoke-tested here (Cell B's local counterpart already validated the
+# same loading/config machinery this reuses; full-unfreeze only changes
+# WHICH encoder params get requires_grad=True, a mechanism already
+# exercised for stage4). Watch this run's `positive_active_rate`/
+# `negative_active_rate` and val loss more closely than Cell A/B's,
+# though: with every encoder parameter now trainable on only 115 training
+# writers, this is the run most exposed to the overfitting risk
+# `ENCODER_LEARNING_RATE`'s conservative 1e-5 (~10x below the head's
+# 1e-4) already anticipates - see that constant's own comment. If this
+# run's val AUC peaks very early then degrades (unlike Cell B's relatively
+# stable climb), that is the signature to look for.
+TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ("stem", "stage1", "stage2", "stage3", "stage4")
 PROJECTOR_HIDDEN_DIM = 256
 EMBEDDING_DIM = 256
 NORM_TYPE = "batch"
