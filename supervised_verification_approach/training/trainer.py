@@ -144,21 +144,35 @@ from protocol import (  # noqa: E402
 # and downstream_supervised_learning_approach.md's K-fold CV section.
 FOLD = "fold_0"
 
-DATASET_NAME = "BHSig260_Hindi"
-# In-domain/matched-domain study (SS16): the encoder pretrained on ONLY
-# Hindi's own fold_0 writers (`Hindi_data_ssl/fold_0`), not the pooled
-# four-dataset encoder every prior Hindi/Bengali/CEDAR run used. Same
-# fold_0 downstream writer split as always (115/15/30) - only the SSL
-# encoder's training data differs (Hindi-only vs. pooled), isolating
-# domain-transfer effects from the pretext objective itself.
-RUN_NAME = "Hindi_data_ssl/fold_0"
-CHECKPOINT_EPOCH: int | None = 50  # pinned: the completed 50-epoch DenseCL run - kept at 50 after reconsidering (SS16.5): the val-loss-minimizing epoch (48) is inside this run's own noise floor, not a real improvement over 50
+DATASET_NAME = "CEDAR"
+# In-domain/matched-domain study (SS16/SS18/SS20), THIRD dataset: the
+# encoder pretrained on ONLY CEDAR's own fold_0 writers
+# (`CEDAR_data_ssl/fold_0`, 35 train/5 val - the smallest of the three
+# single-dataset SSL pools), not the pooled four-dataset encoder. Same
+# fold_0 downstream writer split as always (35/5/15) - only the SSL
+# encoder's training data differs, isolating domain-transfer effects from
+# the pretext objective itself. Completes the pool-size trend the
+# Hindi(115)/Bengali(60) ladders already showed: SSL pool size sets the
+# frozen-encoder starting point, not the fully-unfrozen ceiling (roadmap
+# SS20.1) - CEDAR is the third, smallest point needed to turn that from
+# two points into a trend.
+RUN_NAME = "CEDAR_data_ssl/fold_0"
+CHECKPOINT_EPOCH: int | None = 50  # pinned: the completed 50-epoch DenseCL run (SS18.2 - noisy first ~15 epochs, clean monotonic descent after, val loss lowest at epoch 50 itself, same "unambiguously best at the final epoch" pattern as Bengali)
 
 # Names this run's own results folder, so each rung of the experiment
 # ladder in downstream_supervised_learning_approach.md gets its own
 # directory instead of overwriting the previous one. Change this for
 # every new configuration.
-RUN_TAG = "step4_fullunfrozen_combined_indomain"
+# CELL A (this config): frozen encoder, TRAINABLE_ENCODER_STAGES=() below.
+# For CELL B: set RUN_TAG="step4_finetuned_combined_indomain" and
+# TRAINABLE_ENCODER_STAGES=("stage4",).
+# For CELL C: set RUN_TAG="step4_full_unfrozen_combined_indomain" and
+# TRAINABLE_ENCODER_STAGES=("stem","stage1","stage2","stage3","stage4")
+# - matches Hindi's/Bengali's on-disk Cell C naming (with the underscore
+# between "full" and "unfrozen" - trainer.py's RUN_TAG had drifted from
+# that convention for Hindi, see SS16.10's noted discrepancy; use the
+# underscored form for CEDAR to match Bengali/Hindi's actual folders).
+RUN_TAG = "step4_finetuned_combined_indomain"
 
 TRAIN_SEED = 42
 VAL_TUPLES_PER_ANCHOR = 4
@@ -204,7 +218,9 @@ SCALE_ESTIMATION_SEED = 42
 # 1e-4) already anticipates - see that constant's own comment. If this
 # run's val AUC peaks very early then degrades (unlike Cell B's relatively
 # stable climb), that is the signature to look for.
-TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ("stem", "stage1", "stage2", "stage3", "stage4")
+# CELL A: frozen. CELL B: ("stage4",) (this setting). CELL C: all five
+# below, uncommented - see the RUN_TAG comment above for the matching tag.
+TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ("stage4",)
 PROJECTOR_HIDDEN_DIM = 256
 EMBEDDING_DIM = 256
 NORM_TYPE = "batch"
@@ -263,17 +279,33 @@ MARGIN_N = 0.96
 # mind before assuming a CEDAR-specific sweep alone will "solve" anything
 # beyond calibration.
 #
-# CEDAR-SPECIFIC SWEEP (2026-09-06): CEDAR also has no Step 3a run, so
-# `sweep_margins_combined.py --dataset CEDAR --skip_step3_encoder` (same
-# raw-SSL-encoder proxy as Bengali's). Only 5 validation writers (1,440
-# pair records) - the smallest validation-writer proxy sample swept so
-# far. Result: genuine-pair combined-distance median 0.3342, negative-pair
-# median 0.6692 (exactly 50.0%/50.0% active fraction). Rounded to
-# MARGIN_M_COMBINED=0.33, MARGIN_N_COMBINED=0.67. As always: watch
-# `positive_active_rate`/`negative_active_rate` in the first 1-2 epochs -
-# the proxy is a starting guess, not a settled value, and with only 5
-# validation writers this proxy is measured on a thinner sample than
-# either BHSig260 dataset's sweep was.
+# CEDAR-SPECIFIC SWEEP, POOLED ENCODER (2026-09-06, SUPERSEDED for this
+# in-domain run - see the in-domain sweep just below): CEDAR also has no
+# Step 3a run, so `sweep_margins_combined.py --dataset CEDAR
+# --skip_step3_encoder` (against the POOLED all_data_ssl encoder). Only 5
+# validation writers (1,440 pair records). Result: genuine-pair combined-
+# distance median 0.3342, negative-pair median 0.6692 (50.0%/50.0%
+# active). Rounded to 0.33/0.67 - this was used for the pooled-encoder
+# CEDAR run (results/all_data_ssl/fold_0/CEDAR/step4_finetuned_combined),
+# NOT for the in-domain run below (different encoder, different distance
+# scale - margins do not transfer across SSL runs, same rule as
+# Hindi/Bengali's in-domain re-sweeps, SS16/SS18).
+#
+# CEDAR IN-DOMAIN SWEEP (2026-09-07, SS20 extension): re-swept against the
+# CEDAR-only SSL encoder (`CEDAR_data_ssl/fold_0`, RUN_NAME above), same
+# `--skip_step3_encoder` raw-SSL-encoder proxy convention as Bengali/
+# Hindi's in-domain sweeps. `sweep_margins_combined.py --dataset CEDAR
+# --skip_step3_encoder --ssl_run_name CEDAR_data_ssl/fold_0` - 5 validation
+# writers (still the smallest proxy sample of the three datasets; 1,440
+# pair records). Result: genuine-pair combined-distance median 0.2794,
+# negative-pair median 0.5293 (exactly 50.0%/50.0% active fraction).
+# Rounded to MARGIN_M_COMBINED=0.28, MARGIN_N_COMBINED=0.53 - these are
+# THIS run's margins (Cell A/B/C all use the same values, same reasoning
+# as Bengali/Hindi: the margins are a property of the raw SSL checkpoint's
+# embedding space, identical across cells, only which parameters get
+# gradients differs). As always: watch `positive_active_rate`/
+# `negative_active_rate` in the first 1-2 epochs - only 5 validation
+# writers is a thin proxy sample.
 #
 # IN-DOMAIN HINDI SWEEP (2026-09-06, SS16): re-swept against the NEW
 # Hindi-only SSL encoder (`Hindi_data_ssl/fold_0`, RUN_NAME above) rather
@@ -292,8 +324,8 @@ MARGIN_N = 0.96
 # four datasets during pretraining. Do not read too much into that from
 # margins alone, though - it's a proxy-state observation, not yet a
 # downstream result.
-MARGIN_M_COMBINED = 0.34
-MARGIN_N_COMBINED = 0.71
+MARGIN_M_COMBINED = 0.28
+MARGIN_N_COMBINED = 0.53
 
 # -- Optimizer -----------------------------------------------------------------
 BATCH_SIZE = 8
