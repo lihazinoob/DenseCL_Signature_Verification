@@ -111,17 +111,38 @@ def main() -> None:
     )
     parser.add_argument("--k", type=int, default=8, help="number of reference signatures (SURDS uses 8)")
     parser.add_argument("--checkpoint", default="best_model.pt")
+    parser.add_argument(
+        "--checkpoint_dataset", default=None,
+        help="Zero-shot cross-dataset evaluation: which dataset the checkpoint was TRAINED "
+             "on (selects where to load the checkpoint from). Defaults to --dataset, so every "
+             "in-domain call is unaffected. Pass e.g. --checkpoint_dataset BHSig260_Hindi "
+             "--dataset BHSig260_Bengali to load a Hindi-trained checkpoint's weights and "
+             "evaluate them on Bengali's own validation/test writers and images (--dataset "
+             "controls the evaluation data throughout; --checkpoint_dataset only controls "
+             "where the checkpoint file is read from). Results save to a separate "
+             "results/<ssl_run_name>/zero_shot_OSV/<run_tag>/test_results_K<k>_<dataset>_<fold>.json "
+             "- never the checkpoint's own in-domain result file - so a zero-shot run can never "
+             "overwrite or be confused with that checkpoint's in-domain evaluation.",
+    )
     args = parser.parse_args()
     ssl_run_name = args.ssl_run_name or f"all_data_ssl/{args.fold}"
+    checkpoint_dataset = args.checkpoint_dataset or args.dataset
+    zero_shot = checkpoint_dataset != args.dataset
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     split = get_writer_split(args.dataset, fold=args.fold)
     dataset_dir = DATA_ROOT / args.dataset
 
-    run_dir = SUPERVISED_DIR / "results" / ssl_run_name / args.dataset / args.run_tag
-    checkpoint_path = run_dir / "checkpoints" / args.checkpoint
+    checkpoint_run_dir = SUPERVISED_DIR / "results" / ssl_run_name / checkpoint_dataset / args.run_tag
+    checkpoint_path = checkpoint_run_dir / "checkpoints" / args.checkpoint
     if not checkpoint_path.exists():
         raise FileNotFoundError(f"No checkpoint at {checkpoint_path}")
+
+    if zero_shot:
+        run_dir = SUPERVISED_DIR / "results" / ssl_run_name / "zero_shot_OSV" / args.run_tag
+    else:
+        run_dir = checkpoint_run_dir
+    run_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Dataset    : {args.dataset}  "
           f"({len(split.train_writer_ids)} train / {len(split.validation_writer_ids)} val / "
@@ -130,6 +151,8 @@ def main() -> None:
     print(f"Run tag    : {args.run_tag}")
     print(f"SSL run    : {ssl_run_name}")
     print(f"K          : {args.k}")
+    if zero_shot:
+        print(f"Checkpoint dataset: {checkpoint_dataset}  [ZERO-SHOT - evaluating on a dataset the checkpoint never trained on]")
 
     checkpoint = torch.load(checkpoint_path, map_location=device)
     state_dict = checkpoint["model_state_dict"]
@@ -180,7 +203,10 @@ def main() -> None:
     strict = result.test_summary["balanced_accuracy_mean"]
     surds = result.test_summary_surds_convention["balanced_accuracy_mean"]
     print(f"\n  convention gap: {(surds - strict) * 100:.2f} accuracy points on an identical model")
-    print(f"  published reference: {PUBLISHED_REFERENCE.get(args.dataset, 'n/a')}")
+    if not zero_shot:
+        # Suppressed in zero-shot mode: SURDS's published numbers are in-domain,
+        # not zero-shot - printing them here would invite a misleading comparison.
+        print(f"  published reference: {PUBLISHED_REFERENCE.get(args.dataset, 'n/a')}")
 
     per_writer = result.per_writer_auc
     worst = sorted(per_writer.items(), key=lambda kv: kv[1])[:5]
@@ -188,9 +214,14 @@ def main() -> None:
     for writer_id, auc in worst:
         print(f"    writer {writer_id:>4}: {auc:.4f}")
 
-    out_path = run_dir / f"test_results_K{args.k}.json"
+    if zero_shot:
+        out_path = run_dir / f"test_results_K{args.k}_{args.dataset}_{args.fold}.json"
+    else:
+        out_path = run_dir / f"test_results_K{args.k}.json"
     out_path.write_text(json.dumps({
         "dataset": args.dataset,
+        "checkpoint_dataset": checkpoint_dataset,
+        "zero_shot": zero_shot,
         "fold": args.fold,
         "run_tag": args.run_tag,
         "checkpoint": args.checkpoint,
