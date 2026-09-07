@@ -708,10 +708,10 @@ def train(config: TrainConfig = TrainConfig(), time_budget_seconds: float | None
 
 
 if __name__ == "__main__":
-    # Bengali-only, fold_0: continuing the matched-domain SSL pretraining
-    # control ([[in-domain-ssl-pretraining-study]]) onto the second dataset,
-    # after Hindi-only/fold_0 (`Hindi_data_ssl/fold_0`) completed cleanly.
-    # Same reasoning as that run - see this module's docstring and
+    # CEDAR-only, fold_0: the third and final dataset in the matched-domain
+    # SSL pretraining control's ladder ([[in-domain-ssl-pretraining-study]]),
+    # after Hindi-only/fold_0 and Bengali-only/fold_0 both completed cleanly.
+    # Same reasoning as those runs - see this module's docstring and
     # downstream_supervised_learning_approach.md SS16 for why this control is
     # needed, not just TrainConfig()'s current default (fold_1, all four
     # datasets pooled - left untouched since fold_1's pretraining is a
@@ -719,22 +719,28 @@ if __name__ == "__main__":
     # dataclass's own defaults risks desyncing that run if this file is ever
     # synced there).
     # `fold="fold_0"` selects the SAME writer split already used by every
-    # downstream fold_0 result so far (Hindi/Bengali/CEDAR Step 4): Bengali's
-    # fold_0 has 100 total writers, 30 test, 10 validation, 60 train - so
-    # this run's training pool is exactly those 60 writers (byte-identical
-    # to the pooled fold_0 encoder's Bengali portion), only the OTHER THREE
-    # datasets are removed from the pool. Note this pool is markedly smaller
-    # than Hindi's (60 vs 115 training writers) - worth keeping in mind when
-    # comparing this run's loss curves to Hindi-only's.
+    # downstream fold_0 result so far (Hindi/Bengali/CEDAR Step 4): CEDAR's
+    # fold_0 has 55 total writers, 15 test, 5 validation, 35 train - so this
+    # run's training pool is exactly those 35 writers (byte-identical to the
+    # pooled fold_0 encoder's CEDAR portion), only the OTHER THREE datasets
+    # are removed from the pool. This is the SMALLEST of the three
+    # single-dataset SSL pools by a wide margin (35 vs Bengali's 60 vs
+    # Hindi's 115 training writers) - worth keeping firmly in mind when
+    # judging this run's loss curves and any later downstream result: CEDAR
+    # was already the weakest of the three datasets even with pooled SSL
+    # pretraining (SS15.2, largely attributed to its smaller writer pool),
+    # so an even smaller CEDAR-only SSL pool is the hardest test yet of
+    # whether this pipeline's SSL stage needs a certain data volume to work
+    # well at all.
     #
     # NOT smoke-tested on this machine (a separate SSL run - fold_1, pooled -
     # is already using its GPU); intended to be launched on a different
     # machine, same as the command handed to the user. Every input path here
     # (DATA_ROOT, fold-scoped split dirs, dataset_names filter) is identical
-    # in kind to what Hindi-only/fold_0 already exercised successfully, only
-    # the dataset name and run_name differ.
+    # in kind to what Hindi-only/fold_0 and Bengali-only/fold_0 already
+    # exercised successfully, only the dataset name and run_name differ.
     train(config=TrainConfig(
-        run_name="Bengali_data_ssl/fold_0",
+        run_name="CEDAR_data_ssl/fold_0",
         fold="fold_0",
-        dataset_names=("BHSig260_Bengali",),
+        dataset_names=("CEDAR",),
     ))
