@@ -24,8 +24,26 @@ consider them as reference signatures, and the mean of the distance metric
 between each of the references with the queried sample is considered for
 comparison with the threshold").
 
+ZERO-SHOT CROSS-DATASET EVALUATION (SS16 follow-up, 2026-09-07): pass
+`--checkpoint_dataset` when the checkpoint being evaluated was TRAINED on a
+different dataset than the one you want to evaluate it on - e.g. a Hindi-
+trained checkpoint (`--checkpoint_dataset BHSig260_Hindi`) scored against
+Bengali or CEDAR's own test writers (`--dataset BHSig260_Bengali`). This is
+DetailSemNet's own zero-shot cross-lingual protocol: no gradient step ever
+touches the target dataset, only its (fold_0) validation writers (for tau
+selection - same STRICT/SURDS-convention machinery as an in-domain run,
+just calibrated on a dataset the model never trained on either) and test
+writers (final scoring). `--checkpoint_dataset` defaults to `--dataset`,
+so every existing (in-domain) call to this script is byte-for-byte
+unaffected - only diverges when the two are explicitly set to different
+values. Zero-shot results are saved to a SEPARATE directory
+(`results/<ssl_run_name>/zero_shot_OSV/<run_tag>/`, not the checkpoint's
+own `<checkpoint_dataset>/<run_tag>/` folder) so they can never be
+mistaken for - or silently overwrite - that checkpoint's in-domain result.
+
 Usage:
     python evaluate_checkpoint.py <run_tag> [--dataset BHSig260_Hindi] [--k 8]
+    python evaluate_checkpoint.py <run_tag> --checkpoint_dataset BHSig260_Hindi --dataset BHSig260_Bengali --ssl_run_name Hindi_data_ssl/fold_0
 """
 
 from __future__ import annotations
@@ -92,12 +110,31 @@ def _show(title: str, summary: dict) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("run_tag", help="results/<ssl_run_name>/<dataset>/<run_tag>/")
-    parser.add_argument("--dataset", default="BHSig260_Hindi")
+    parser.add_argument("run_tag", help="results/<ssl_run_name>/<checkpoint_dataset>/<run_tag>/")
+    parser.add_argument("--dataset", default="BHSig260_Hindi",
+                         help="Which dataset to EVALUATE on - selects the writer split, images, "
+                              "and (val/test) writer pools scored against. Same as "
+                              "--checkpoint_dataset for a normal in-domain evaluation; different "
+                              "for a zero-shot cross-dataset evaluation (see --checkpoint_dataset).")
     parser.add_argument("--fold", default="fold_0",
                          help="K-fold CV fold - selects the writer split "
                               "(data/*_writer_split/<fold>/); also feeds the default "
-                              "--ssl_run_name if that is not given explicitly.")
+                              "--ssl_run_name if that is not given explicitly. Applies to "
+                              "--dataset's split (the one actually evaluated), not "
+                              "--checkpoint_dataset's.")
+    parser.add_argument(
+        "--checkpoint_dataset", default=None,
+        help="Which dataset's results folder the checkpoint being evaluated lives under - i.e. "
+             "which dataset it was TRAINED on. Defaults to --dataset (every existing in-domain "
+             "call is unaffected). Set this to a DIFFERENT dataset than --dataset for a "
+             "zero-shot cross-dataset/cross-lingual evaluation (DetailSemNet's own protocol): "
+             "e.g. --checkpoint_dataset BHSig260_Hindi --dataset BHSig260_Bengali evaluates a "
+             "Hindi-trained checkpoint on Bengali's own fold_0 test writers, with zero gradient "
+             "steps ever having touched Bengali. Results then save to a separate "
+             "results/<ssl_run_name>/zero_shot_OSV/<run_tag>/ directory instead of the "
+             "checkpoint's own <checkpoint_dataset>/<run_tag>/ folder, so a zero-shot result can "
+             "never be confused with, or overwrite, that checkpoint's in-domain result.",
+    )
     parser.add_argument(
         "--ssl_run_name", default=None,
         help="Which SSL pretraining run's encoder produced this checkpoint - MUST match "
@@ -107,25 +144,36 @@ def main() -> None:
              "would be wrong). Defaults to the pooled 'all_data_ssl/<fold>' run, matching "
              "every trainer.py run before SS16; pass e.g. 'Hindi_data_ssl/fold_0' for a "
              "single-dataset SSL run's checkpoint. Also determines the results directory "
-             "(results/<ssl_run_name>/<dataset>/<run_tag>/), matching trainer.py's RESULTS_DIR.",
+             "(results/<ssl_run_name>/<checkpoint_dataset>/<run_tag>/), matching trainer.py's "
+             "RESULTS_DIR.",
     )
     parser.add_argument("--k", type=int, default=8, help="number of reference signatures (SURDS uses 8)")
     parser.add_argument("--checkpoint", default="best_model.pt")
     args = parser.parse_args()
     ssl_run_name = args.ssl_run_name or f"all_data_ssl/{args.fold}"
+    checkpoint_dataset = args.checkpoint_dataset or args.dataset
+    is_zero_shot = checkpoint_dataset != args.dataset
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     split = get_writer_split(args.dataset, fold=args.fold)
     dataset_dir = DATA_ROOT / args.dataset
 
-    run_dir = SUPERVISED_DIR / "results" / ssl_run_name / args.dataset / args.run_tag
-    checkpoint_path = run_dir / "checkpoints" / args.checkpoint
+    checkpoint_run_dir = SUPERVISED_DIR / "results" / ssl_run_name / checkpoint_dataset / args.run_tag
+    checkpoint_path = checkpoint_run_dir / "checkpoints" / args.checkpoint
     if not checkpoint_path.exists():
         raise FileNotFoundError(f"No checkpoint at {checkpoint_path}")
 
-    print(f"Dataset    : {args.dataset}  "
-          f"({len(split.train_writer_ids)} train / {len(split.validation_writer_ids)} val / "
-          f"{len(split.test_writer_ids)} test writers)")
+    if is_zero_shot:
+        print(f"*** ZERO-SHOT cross-dataset evaluation ***")
+        print(f"Checkpoint trained on : {checkpoint_dataset}")
+        print(f"Evaluating on          : {args.dataset}  "
+              f"({len(split.train_writer_ids)} train / {len(split.validation_writer_ids)} val / "
+              f"{len(split.test_writer_ids)} test writers - train writers irrelevant here, "
+              f"no training happens)")
+    else:
+        print(f"Dataset    : {args.dataset}  "
+              f"({len(split.train_writer_ids)} train / {len(split.validation_writer_ids)} val / "
+              f"{len(split.test_writer_ids)} test writers)")
     print(f"Fold       : {args.fold}")
     print(f"Run tag    : {args.run_tag}")
     print(f"SSL run    : {ssl_run_name}")
@@ -180,7 +228,15 @@ def main() -> None:
     strict = result.test_summary["balanced_accuracy_mean"]
     surds = result.test_summary_surds_convention["balanced_accuracy_mean"]
     print(f"\n  convention gap: {(surds - strict) * 100:.2f} accuracy points on an identical model")
-    print(f"  published reference: {PUBLISHED_REFERENCE.get(args.dataset, 'n/a')}")
+    if is_zero_shot:
+        # SURDS's published numbers are in-domain (trained and tested on the
+        # same dataset) - not a valid comparison point for a zero-shot
+        # cross-dataset result, so don't print it here (would invite
+        # exactly the apples-to-oranges comparison this project has been
+        # careful to avoid elsewhere - see PUBLISHED_REFERENCE's own docstring).
+        print(f"  (published reference omitted - SURDS's numbers are in-domain, not zero-shot)")
+    else:
+        print(f"  published reference: {PUBLISHED_REFERENCE.get(args.dataset, 'n/a')}")
 
     per_writer = result.per_writer_auc
     worst = sorted(per_writer.items(), key=lambda kv: kv[1])[:5]
@@ -188,9 +244,18 @@ def main() -> None:
     for writer_id, auc in worst:
         print(f"    writer {writer_id:>4}: {auc:.4f}")
 
-    out_path = run_dir / f"test_results_K{args.k}.json"
+    if is_zero_shot:
+        # Separate directory, never the checkpoint's own <checkpoint_dataset>/
+        # <run_tag>/ folder - see --checkpoint_dataset's help text for why.
+        results_dir = SUPERVISED_DIR / "results" / ssl_run_name / "zero_shot_OSV" / args.run_tag
+        results_dir.mkdir(parents=True, exist_ok=True)
+        out_path = results_dir / f"test_results_K{args.k}_{args.dataset}_{args.fold}.json"
+    else:
+        out_path = checkpoint_run_dir / f"test_results_K{args.k}.json"
     out_path.write_text(json.dumps({
         "dataset": args.dataset,
+        "checkpoint_dataset": checkpoint_dataset,
+        "zero_shot": is_zero_shot,
         "fold": args.fold,
         "run_tag": args.run_tag,
         "checkpoint": args.checkpoint,
