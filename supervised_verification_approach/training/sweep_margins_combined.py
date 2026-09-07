@@ -92,9 +92,17 @@ def main() -> None:
     parser.add_argument("--sinkhorn_iterations", type=int, default=50)
     parser.add_argument("--tuples_per_anchor", type=int, default=4)
     parser.add_argument("--seed", type=int, default=314)
+    parser.add_argument(
+        "--device", default=None, choices=["cuda", "cpu"],
+        help="Force a device instead of auto-detecting cuda. Useful when the GPU is already busy "
+             "with a real training run (e.g. an SSL pretraining job) - this script only does "
+             "inference (encoding a few hundred images + a distance computation), cheap enough to "
+             "run on CPU in a couple minutes rather than contend with or slow down a concurrent "
+             "GPU job. Defaults to cuda if available, matching every prior sweep's behavior.",
+    )
     args = parser.parse_args()
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(args.device) if args.device else torch.device("cuda" if torch.cuda.is_available() else "cpu")
     split = get_writer_split(args.dataset, fold=args.fold)
     dataset_dir = DATA_ROOT / args.dataset
 
