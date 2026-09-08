@@ -144,6 +144,7 @@ from protocol import (  # noqa: E402
 # and downstream_supervised_learning_approach.md's K-fold CV section.
 FOLD = "fold_0"
 
+<<<<<<< HEAD
 DATASET_NAME = "CEDAR"
 # In-domain/matched-domain study (SS16/SS18/SS20), THIRD dataset: the
 # encoder pretrained on ONLY CEDAR's own fold_0 writers
@@ -158,6 +159,19 @@ DATASET_NAME = "CEDAR"
 # two points into a trend.
 RUN_NAME = "CEDAR_data_ssl/fold_0"
 CHECKPOINT_EPOCH: int | None = 50  # pinned: the completed 50-epoch DenseCL run (SS18.2 - noisy first ~15 epochs, clean monotonic descent after, val loss lowest at epoch 50 itself, same "unambiguously best at the final epoch" pattern as Bengali)
+=======
+DATASET_NAME = "BHSig260_Bengali"
+# In-domain/matched-domain study (SS16), Bengali rung - the encoder
+# pretrained on ONLY Bengali's own fold_0 writers (`Bengali_data_ssl/
+# fold_0`), not the pooled four-dataset encoder. Same fold_0 downstream
+# writer split as always (60/10/30) - only the SSL encoder's training
+# data differs (Bengali-only vs. pooled), isolating domain-transfer
+# effects from the pretext objective itself. Mirrors the completed Hindi
+# rung (SS16) - same three-cell ladder (frozen/stage4/full), just on
+# Bengali's own encoder this time.
+RUN_NAME = "Bengali_data_ssl/fold_0"
+CHECKPOINT_EPOCH: int | None = 50  # pinned: the completed 50-epoch DenseCL run - kept at 50 after reconsidering (SS16.5): the val-loss-minimizing epoch (48) is inside this run's own noise floor, not a real improvement over 50
+>>>>>>> Bengali_data_ssl
 
 # Names this run's own results folder, so each rung of the experiment
 # ladder in downstream_supervised_learning_approach.md gets its own
@@ -191,6 +205,7 @@ SCALE_ESTIMATION_NUM_QUADRUPLES = 200  # only used when ALPHA > 0.0
 SCALE_ESTIMATION_SEED = 42
 
 # -- Model -----------------------------------------------------------------
+<<<<<<< HEAD
 # Step 4, Cell C - the FULL encoder unfrozen (stem + all four stages), the
 # third and final rung of the in-domain study's ladder (SS16): the "ultimate
 # capability" run - how well does this whole pipeline do when the matched-
@@ -221,6 +236,16 @@ SCALE_ESTIMATION_SEED = 42
 # CELL A: frozen. CELL B: ("stage4",) (this setting). CELL C: all five
 # below, uncommented - see the RUN_TAG comment above for the matching tag.
 TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ("stage4",)
+=======
+# Step 4, Cell A (FROZEN encoder, only the projector/local_projection
+# heads trainable) - the STARTING cell for Bengali's in-domain rung (SS16),
+# same reasoning and same three-cell ladder order as the completed Hindi
+# rung: frozen first to characterize the matched-domain ceiling with zero
+# encoder adaptation, then unfreeze stage4 (Cell B), then the full encoder
+# (Cell C) - each a new TRAINABLE_ENCODER_STAGES/RUN_TAG pair on this same
+# Bengali_data_ssl/fold_0 encoder.
+TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ()
+>>>>>>> Bengali_data_ssl
 PROJECTOR_HIDDEN_DIM = 256
 EMBEDDING_DIM = 256
 NORM_TYPE = "batch"
@@ -324,8 +349,30 @@ MARGIN_N = 0.96
 # four datasets during pretraining. Do not read too much into that from
 # margins alone, though - it's a proxy-state observation, not yet a
 # downstream result.
+<<<<<<< HEAD
 MARGIN_M_COMBINED = 0.28
 MARGIN_N_COMBINED = 0.53
+=======
+#
+# IN-DOMAIN BENGALI SWEEP (2026-09-07, SS16 continued): re-swept against
+# the NEW Bengali-only SSL encoder (`Bengali_data_ssl/fold_0`, RUN_NAME
+# above) rather than reusing either the original pooled-encoder Bengali
+# margins (0.27/0.53, SS14.6) or Hindi's in-domain margins (0.34/0.71) -
+# margins are a property of THIS SPECIFIC encoder's raw embedding-space
+# distance scale, not portable across different SSL runs. `sweep_margins_
+# combined.py --dataset BHSig260_Bengali --skip_step3_encoder
+# --ssl_run_name Bengali_data_ssl/fold_0 --device cpu` (run on CPU,
+# deliberately - the local machine's GPU was already busy with the
+# CEDAR-only SSL pretraining run at the time; this sweep only does
+# inference over ~280 images, cheap enough on CPU to avoid contending
+# with a real training job - `--device` is a new CLI flag added for
+# exactly this). 10 validation writers, 2,880 pair records. Result:
+# genuine-pair combined-distance median 0.3162, negative-pair median
+# 0.6407 (exactly 50.0%/50.0% active fraction). Rounded to
+# MARGIN_M_COMBINED=0.32, MARGIN_N_COMBINED=0.64.
+MARGIN_M_COMBINED = 0.32
+MARGIN_N_COMBINED = 0.64
+>>>>>>> Bengali_data_ssl
 
 # -- Optimizer -----------------------------------------------------------------
 BATCH_SIZE = 8
