@@ -144,49 +144,32 @@ from protocol import (  # noqa: E402
 # and downstream_supervised_learning_approach.md's K-fold CV section.
 FOLD = "fold_0"
 
-<<<<<<< HEAD
-DATASET_NAME = "CEDAR"
-# In-domain/matched-domain study (SS16/SS18/SS20), THIRD dataset: the
-# encoder pretrained on ONLY CEDAR's own fold_0 writers
-# (`CEDAR_data_ssl/fold_0`, 35 train/5 val - the smallest of the three
-# single-dataset SSL pools), not the pooled four-dataset encoder. Same
-# fold_0 downstream writer split as always (35/5/15) - only the SSL
-# encoder's training data differs, isolating domain-transfer effects from
-# the pretext objective itself. Completes the pool-size trend the
-# Hindi(115)/Bengali(60) ladders already showed: SSL pool size sets the
-# frozen-encoder starting point, not the fully-unfrozen ceiling (roadmap
-# SS20.1) - CEDAR is the third, smallest point needed to turn that from
-# two points into a trend.
-RUN_NAME = "CEDAR_data_ssl/fold_0"
-CHECKPOINT_EPOCH: int | None = 50  # pinned: the completed 50-epoch DenseCL run (SS18.2 - noisy first ~15 epochs, clean monotonic descent after, val loss lowest at epoch 50 itself, same "unambiguously best at the final epoch" pattern as Bengali)
-=======
 DATASET_NAME = "BHSig260_Bengali"
-# In-domain/matched-domain study (SS16), Bengali rung - the encoder
-# pretrained on ONLY Bengali's own fold_0 writers (`Bengali_data_ssl/
-# fold_0`), not the pooled four-dataset encoder. Same fold_0 downstream
-# writer split as always (60/10/30) - only the SSL encoder's training
-# data differs (Bengali-only vs. pooled), isolating domain-transfer
-# effects from the pretext objective itself. Mirrors the completed Hindi
-# rung (SS16) - same three-cell ladder (frozen/stage4/full), just on
-# Bengali's own encoder this time.
-RUN_NAME = "Bengali_data_ssl/fold_0"
-CHECKPOINT_EPOCH: int | None = 50  # pinned: the completed 50-epoch DenseCL run - kept at 50 after reconsidering (SS16.5): the val-loss-minimizing epoch (48) is inside this run's own noise floor, not a real improvement over 50
->>>>>>> Bengali_data_ssl
+# Cross-dataset study (ICCIT §4.2), first combination: pretrain on Hindi
+# (115 writers, the largest available non-target pool - the paper's stated
+# selection rule), fine-tune + test on Bengali. RUN_NAME (SSL source) and
+# DATASET_NAME (supervised target) are deliberately different datasets
+# here - RESULTS_DIR below is keyed on both, so this cannot collide with
+# the in-domain Bengali runs at results/Bengali_data_ssl/fold_0/
+# BHSig260_Bengali/. No new SSL pretraining needed - reuses the existing
+# Hindi_data_ssl/fold_0 encoder.
+RUN_NAME = "Hindi_data_ssl/fold_0"
+CHECKPOINT_EPOCH: int | None = 50  # pinned: same completed 50-epoch Hindi DenseCL run used for every Hindi-sourced run so far (in-domain and zero-shot alike)
 
 # Names this run's own results folder, so each rung of the experiment
-# ladder in downstream_supervised_learning_approach.md gets its own
-# directory instead of overwriting the previous one. Change this for
-# every new configuration.
+# ladder in downstream_supervised_learning_approach.md / the ICCIT doc
+# gets its own directory instead of overwriting the previous one. Change
+# this for every new configuration.
 # CELL A (this config): frozen encoder, TRAINABLE_ENCODER_STAGES=() below.
-# For CELL B: set RUN_TAG="step4_finetuned_combined_indomain" and
+# For CELL B: set RUN_TAG="step4_finetuned_combined_crossdomain" and
 # TRAINABLE_ENCODER_STAGES=("stage4",).
-# For CELL C: set RUN_TAG="step4_full_unfrozen_combined_indomain" and
-# TRAINABLE_ENCODER_STAGES=("stem","stage1","stage2","stage3","stage4")
-# - matches Hindi's/Bengali's on-disk Cell C naming (with the underscore
-# between "full" and "unfrozen" - trainer.py's RUN_TAG had drifted from
-# that convention for Hindi, see SS16.10's noted discrepancy; use the
-# underscored form for CEDAR to match Bengali/Hindi's actual folders).
-RUN_TAG = "step4_finetuned_combined_indomain"
+# For CELL C: set RUN_TAG="step4_full_unfrozen_combined_crossdomain" and
+# TRAINABLE_ENCODER_STAGES=("stem","stage1","stage2","stage3","stage4").
+# "_crossdomain" (not "_indomain") distinguishes this ladder from the
+# matched-domain runs already in results/Hindi_data_ssl/fold_0/
+# BHSig260_Hindi/ - same RUN_NAME, different DATASET_NAME, so RESULTS_DIR
+# alone would not disambiguate them without a distinct tag.
+RUN_TAG = "step4_frozen_combined_crossdomain"
 
 TRAIN_SEED = 42
 VAL_TUPLES_PER_ANCHOR = 4
@@ -205,47 +188,20 @@ SCALE_ESTIMATION_NUM_QUADRUPLES = 200  # only used when ALPHA > 0.0
 SCALE_ESTIMATION_SEED = 42
 
 # -- Model -----------------------------------------------------------------
-<<<<<<< HEAD
-# Step 4, Cell C - the FULL encoder unfrozen (stem + all four stages), the
-# third and final rung of the in-domain study's ladder (SS16): the "ultimate
-# capability" run - how well does this whole pipeline do when the matched-
-# domain encoder is given every parameter to adapt with, not just stage4.
-# No project precedent for this cell yet (grepped the roadmap doc - only
-# frozen/stage4 configs exist so far for any dataset), so this is the first
-# full-unfreeze run in the whole ladder, in-domain or pooled.
-#
-# Same Hindi-only SSL encoder (RUN_NAME), same fold_0 writer split, same
-# MARGIN_M_COMBINED/MARGIN_N_COMBINED as Cell A/B - deliberately NOT
-# re-swept, for the same reason as Cell B: the margins were computed
-# against the raw SSL checkpoint's OWN embedding space (see the margin
-# comment below), which is identical for Cell A/B/C - only which
-# parameters get gradients during training differs, never what the
-# encoder produces before this run's own training starts.
-#
-# NOT smoke-tested here (Cell B's local counterpart already validated the
-# same loading/config machinery this reuses; full-unfreeze only changes
-# WHICH encoder params get requires_grad=True, a mechanism already
-# exercised for stage4). Watch this run's `positive_active_rate`/
-# `negative_active_rate` and val loss more closely than Cell A/B's,
-# though: with every encoder parameter now trainable on only 115 training
-# writers, this is the run most exposed to the overfitting risk
-# `ENCODER_LEARNING_RATE`'s conservative 1e-5 (~10x below the head's
-# 1e-4) already anticipates - see that constant's own comment. If this
-# run's val AUC peaks very early then degrades (unlike Cell B's relatively
-# stable climb), that is the signature to look for.
-# CELL A: frozen. CELL B: ("stage4",) (this setting). CELL C: all five
+# Step 4, Cell A (FROZEN encoder, only the projector/local_projection heads
+# trainable) - the STARTING cell for the Hindi->Bengali cross-domain rung
+# (ICCIT §4.2): characterize how well a Hindi-pretrained-only encoder does
+# on Bengali verification with zero encoder adaptation, before unfreezing
+# stage4 (Cell B) then the full encoder (Cell C) on this same
+# Hindi_data_ssl/fold_0 encoder. Note this is NOT the same measurement as
+# the zero-shot cross-lingual test (roadmap §20/§22) - zero-shot uses a
+# checkpoint already fine-tuned end-to-end on the SOURCE dataset's labels
+# with zero exposure to the target; this run instead trains from the raw
+# Hindi SSL encoder using Bengali's OWN labels, so it is the cross-dataset
+# analogue of the in-domain ladder, not of the zero-shot one.
+# CELL A: frozen (this setting). CELL B: ("stage4",). CELL C: all five
 # below, uncommented - see the RUN_TAG comment above for the matching tag.
-TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ("stage4",)
-=======
-# Step 4, Cell A (FROZEN encoder, only the projector/local_projection
-# heads trainable) - the STARTING cell for Bengali's in-domain rung (SS16),
-# same reasoning and same three-cell ladder order as the completed Hindi
-# rung: frozen first to characterize the matched-domain ceiling with zero
-# encoder adaptation, then unfreeze stage4 (Cell B), then the full encoder
-# (Cell C) - each a new TRAINABLE_ENCODER_STAGES/RUN_TAG pair on this same
-# Bengali_data_ssl/fold_0 encoder.
 TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ()
->>>>>>> Bengali_data_ssl
 PROJECTOR_HIDDEN_DIM = 256
 EMBEDDING_DIM = 256
 NORM_TYPE = "batch"
@@ -349,30 +305,23 @@ MARGIN_N = 0.96
 # four datasets during pretraining. Do not read too much into that from
 # margins alone, though - it's a proxy-state observation, not yet a
 # downstream result.
-<<<<<<< HEAD
-MARGIN_M_COMBINED = 0.28
-MARGIN_N_COMBINED = 0.53
-=======
-#
-# IN-DOMAIN BENGALI SWEEP (2026-09-07, SS16 continued): re-swept against
-# the NEW Bengali-only SSL encoder (`Bengali_data_ssl/fold_0`, RUN_NAME
-# above) rather than reusing either the original pooled-encoder Bengali
-# margins (0.27/0.53, SS14.6) or Hindi's in-domain margins (0.34/0.71) -
-# margins are a property of THIS SPECIFIC encoder's raw embedding-space
-# distance scale, not portable across different SSL runs. `sweep_margins_
-# combined.py --dataset BHSig260_Bengali --skip_step3_encoder
-# --ssl_run_name Bengali_data_ssl/fold_0 --device cpu` (run on CPU,
-# deliberately - the local machine's GPU was already busy with the
-# CEDAR-only SSL pretraining run at the time; this sweep only does
-# inference over ~280 images, cheap enough on CPU to avoid contending
-# with a real training job - `--device` is a new CLI flag added for
-# exactly this). 10 validation writers, 2,880 pair records. Result:
-# genuine-pair combined-distance median 0.3162, negative-pair median
-# 0.6407 (exactly 50.0%/50.0% active fraction). Rounded to
-# MARGIN_M_COMBINED=0.32, MARGIN_N_COMBINED=0.64.
-MARGIN_M_COMBINED = 0.32
-MARGIN_N_COMBINED = 0.64
->>>>>>> Bengali_data_ssl
+# CROSS-DOMAIN HINDI->BENGALI SWEEP (ICCIT §4.2, 2026-09-08): margins are
+# a property of BOTH the raw SSL checkpoint's embedding scale AND the
+# target dataset's own distance distribution - neither the in-domain Hindi
+# sweep (0.34/0.71, against BHSig260_Hindi validation pairs) nor the
+# in-domain Bengali sweep (0.32/0.64, against the Bengali-only encoder)
+# transfer here. `sweep_margins_combined.py --dataset BHSig260_Bengali
+# --skip_step3_encoder --ssl_run_name Hindi_data_ssl/fold_0` (Hindi
+# encoder, Bengali validation pairs). 10 validation writers, 2,880 pair
+# records. Result: genuine-pair combined-distance median 0.3250,
+# negative-pair median 0.6096 (exactly 50.0%/50.0% active fraction).
+# Rounded to MARGIN_M_COMBINED=0.33, MARGIN_N_COMBINED=0.61 - notably
+# wider than the in-domain Bengali margins (0.32/0.64 -> similar m, looser
+# n), consistent with a Hindi-pretrained encoder producing a somewhat
+# different embedding geometry over Bengali images than an encoder that
+# saw Bengali during SSL pretraining.
+MARGIN_M_COMBINED = 0.33
+MARGIN_N_COMBINED = 0.61
 
 # -- Optimizer -----------------------------------------------------------------
 BATCH_SIZE = 8
