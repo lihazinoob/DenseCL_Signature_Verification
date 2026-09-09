@@ -144,15 +144,16 @@ from protocol import (  # noqa: E402
 # and downstream_supervised_learning_approach.md's K-fold CV section.
 FOLD = "fold_0"
 
-DATASET_NAME = "BHSig260_Bengali"
-# Cross-dataset study (ICCIT §4.2), first combination: pretrain on Hindi
+DATASET_NAME = "CEDAR"
+# Cross-dataset study (ICCIT §4.2), third combination: pretrain on Hindi
 # (115 writers, the largest available non-target pool - the paper's stated
-# selection rule), fine-tune + test on Bengali. RUN_NAME (SSL source) and
+# selection rule), fine-tune + test on CEDAR. RUN_NAME (SSL source) and
 # DATASET_NAME (supervised target) are deliberately different datasets
 # here - RESULTS_DIR below is keyed on both, so this cannot collide with
-# the in-domain Bengali runs at results/Bengali_data_ssl/fold_0/
-# BHSig260_Bengali/. No new SSL pretraining needed - reuses the existing
-# Hindi_data_ssl/fold_0 encoder.
+# the in-domain CEDAR runs at results/CEDAR_data_ssl/fold_0/CEDAR/. No new
+# SSL pretraining needed - reuses the existing Hindi_data_ssl/fold_0
+# encoder. (Hindi->Bengali, the first combination, and Bengali->Hindi, the
+# second, are both already complete - see the roadmap doc.)
 RUN_NAME = "Hindi_data_ssl/fold_0"
 CHECKPOINT_EPOCH: int | None = 50  # pinned: same completed 50-epoch Hindi DenseCL run used for every Hindi-sourced run so far (in-domain and zero-shot alike)
 
@@ -315,13 +316,24 @@ MARGIN_N = 0.96
 # encoder, Bengali validation pairs). 10 validation writers, 2,880 pair
 # records. Result: genuine-pair combined-distance median 0.3250,
 # negative-pair median 0.6096 (exactly 50.0%/50.0% active fraction).
-# Rounded to MARGIN_M_COMBINED=0.33, MARGIN_N_COMBINED=0.61 - notably
-# wider than the in-domain Bengali margins (0.32/0.64 -> similar m, looser
-# n), consistent with a Hindi-pretrained encoder producing a somewhat
-# different embedding geometry over Bengali images than an encoder that
-# saw Bengali during SSL pretraining.
-MARGIN_M_COMBINED = 0.33
-MARGIN_N_COMBINED = 0.61
+# Rounded to 0.33/0.61 - SUPERSEDED for this run (CEDAR is now the target,
+# not Bengali - see below), kept only as this pair's own record.
+#
+# CROSS-DOMAIN HINDI->CEDAR SWEEP (ICCIT §4.2, 2026-09-09, third
+# combination): re-swept against CEDAR's own validation pairs -
+# `sweep_margins_combined.py --dataset CEDAR --skip_step3_encoder
+# --ssl_run_name Hindi_data_ssl/fold_0`. Only 5 validation writers (CEDAR's
+# thin proxy pool, same as every other CEDAR sweep in this project), 1,440
+# pair records. Result: genuine-pair combined-distance median 0.3223,
+# negative-pair median 0.5688 (exactly 50.0%/50.0% active fraction).
+# Rounded to MARGIN_M_COMBINED=0.32, MARGIN_N_COMBINED=0.57 - notably
+# tighter negative margin than either Hindi->Bengali (0.61) or the
+# in-domain CEDAR sweep (0.53, different encoder), consistent with CEDAR's
+# own narrower negative-pair distance spread already seen in its in-domain
+# sweep. Watch positive_active_rate/negative_active_rate closely in the
+# first 1-2 epochs given how thin this proxy sample is.
+MARGIN_M_COMBINED = 0.32
+MARGIN_N_COMBINED = 0.57
 
 # -- Optimizer -----------------------------------------------------------------
 BATCH_SIZE = 8

@@ -149,19 +149,6 @@ def main() -> None:
     )
     parser.add_argument("--k", type=int, default=8, help="number of reference signatures (SURDS uses 8)")
     parser.add_argument("--checkpoint", default="best_model.pt")
-    parser.add_argument(
-        "--checkpoint_dataset", default=None,
-        help="Zero-shot cross-dataset evaluation: which dataset the checkpoint was TRAINED "
-             "on (selects where to load the checkpoint from). Defaults to --dataset, so every "
-             "in-domain call is unaffected. Pass e.g. --checkpoint_dataset BHSig260_Hindi "
-             "--dataset BHSig260_Bengali to load a Hindi-trained checkpoint's weights and "
-             "evaluate them on Bengali's own validation/test writers and images (--dataset "
-             "controls the evaluation data throughout; --checkpoint_dataset only controls "
-             "where the checkpoint file is read from). Results save to a separate "
-             "results/<ssl_run_name>/zero_shot_OSV/<run_tag>/test_results_K<k>_<dataset>_<fold>.json "
-             "- never the checkpoint's own in-domain result file - so a zero-shot run can never "
-             "overwrite or be confused with that checkpoint's in-domain evaluation.",
-    )
     args = parser.parse_args()
     ssl_run_name = args.ssl_run_name or f"all_data_ssl/{args.fold}"
     checkpoint_dataset = args.checkpoint_dataset or args.dataset
@@ -171,8 +158,6 @@ def main() -> None:
     split = get_writer_split(args.dataset, fold=args.fold)
     dataset_dir = DATA_ROOT / args.dataset
 
-    checkpoint_run_dir = SUPERVISED_DIR / "results" / ssl_run_name / checkpoint_dataset / args.run_tag
-    checkpoint_path = checkpoint_run_dir / "checkpoints" / args.checkpoint
     checkpoint_run_dir = SUPERVISED_DIR / "results" / ssl_run_name / checkpoint_dataset / args.run_tag
     checkpoint_path = checkpoint_run_dir / "checkpoints" / args.checkpoint
     if not checkpoint_path.exists():
@@ -193,7 +178,7 @@ def main() -> None:
     print(f"Run tag    : {args.run_tag}")
     print(f"SSL run    : {ssl_run_name}")
     print(f"K          : {args.k}")
-    if zero_shot:
+    if is_zero_shot:
         print(f"Checkpoint dataset: {checkpoint_dataset}  [ZERO-SHOT - evaluating on a dataset the checkpoint never trained on]")
 
     checkpoint = torch.load(checkpoint_path, map_location=device)
