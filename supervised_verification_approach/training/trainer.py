@@ -117,7 +117,7 @@ from writer_splits import DATA_ROOT, get_writer_split  # noqa: E402
 from dual_triplet_dataset import DualTripletDataset  # noqa: E402
 from fixed_dual_triplet_dataset import FixedDualTripletDataset, build_fixed_triplet_records  # noqa: E402
 from pair_dataset import PairDataset  # noqa: E402
-from embedding_model import load_downstream_model  # noqa: E402
+from embedding_model import load_downstream_model, load_random_init_downstream_model  # noqa: E402
 from dual_triplet_loss import DualTripletLoss  # noqa: E402
 from double_margin_loss import DoubleMarginLoss  # noqa: E402
 from double_margin_distance_loss import DoubleMarginDistanceLoss  # noqa: E402
@@ -144,33 +144,35 @@ from protocol import (  # noqa: E402
 # and downstream_supervised_learning_approach.md's K-fold CV section.
 FOLD = "fold_0"
 
-DATASET_NAME = "CEDAR"
-# Cross-dataset study (ICCIT §4.2), third combination: pretrain on Hindi
-# (115 writers, the largest available non-target pool - the paper's stated
-# selection rule), fine-tune + test on CEDAR. RUN_NAME (SSL source) and
-# DATASET_NAME (supervised target) are deliberately different datasets
-# here - RESULTS_DIR below is keyed on both, so this cannot collide with
-# the in-domain CEDAR runs at results/CEDAR_data_ssl/fold_0/CEDAR/. No new
-# SSL pretraining needed - reuses the existing Hindi_data_ssl/fold_0
-# encoder. (Hindi->Bengali, the first combination, and Bengali->Hindi, the
-# second, are both already complete - see the roadmap doc.)
-RUN_NAME = "Hindi_data_ssl/fold_0"
-CHECKPOINT_EPOCH: int | None = 50  # pinned: same completed 50-epoch Hindi DenseCL run used for every Hindi-sourced run so far (in-domain and zero-shot alike)
+DATASET_NAME = "BHSig260_Hindi"
+# ICCIT §4.3/§9.1/§9.2 Tier 1, run (B) - the RANDOM-INIT CONTROL. Question:
+# did the DenseCL pretraining do anything at all? Keeps the REAL reported
+# architecture unchanged - combined distance (global + local branch), Cell
+# C (full unfreeze) - identical to
+# results/Hindi_data_ssl/fold_0/BHSig260_Hindi/step4_full_unfrozen_combined_indomain
+# (AUC 0.9911, results.md §1) - the ONLY thing this run changes is
+# RANDOM_INIT below: no SSL checkpoint is loaded at all, the encoder
+# starts at random initialization (seeded, RANDOM_INIT_SEED) instead.
+# This is a DIFFERENT axis from §9.2's global-only-head ablation (Tier 1
+# run A, complete on all 3 datasets, results.md §9) - that one asks "does
+# the local branch help," holding pretraining fixed; this one asks "does
+# the pretraining help," holding the architecture (local branch included)
+# fixed.
+RUN_NAME = "random_init_control/fold_0"  # pseudo run-name, used only to name RESULTS_DIR below (matches every other run's directory shape) - there is no real SSL run here, nothing is ever loaded from this path
+CHECKPOINT_EPOCH: int | None = None  # unused when RANDOM_INIT=True below
+RANDOM_INIT = True  # <-- THE control switch: no SSL checkpoint loaded, encoder starts random (see model-construction call below)
+RANDOM_INIT_SEED = 42  # seeds the encoder's OWN random weights (not just data sampling) - MUST match the seed used for MARGIN_M_COMBINED/MARGIN_N_COMBINED's sweep below, or the margins were measured against different random weights than the ones actually trained
 
 # Names this run's own results folder, so each rung of the experiment
 # ladder in downstream_supervised_learning_approach.md / the ICCIT doc
 # gets its own directory instead of overwriting the previous one. Change
 # this for every new configuration.
-# CELL A (this config): frozen encoder, TRAINABLE_ENCODER_STAGES=() below.
-# For CELL B: set RUN_TAG="step4_finetuned_combined_crossdomain" and
-# TRAINABLE_ENCODER_STAGES=("stage4",).
-# For CELL C: set RUN_TAG="step4_full_unfrozen_combined_crossdomain" and
-# TRAINABLE_ENCODER_STAGES=("stem","stage1","stage2","stage3","stage4").
-# "_crossdomain" (not "_indomain") distinguishes this ladder from the
-# matched-domain runs already in results/Hindi_data_ssl/fold_0/
-# BHSig260_Hindi/ - same RUN_NAME, different DATASET_NAME, so RESULTS_DIR
-# alone would not disambiguate them without a distinct tag.
-RUN_TAG = "step4_frozen_combined_crossdomain"
+# THIS RUN = Cell C (full unfreeze), combined head (real architecture),
+# random-init encoder, Hindi (ICCIT §4.3's specified dataset for this
+# control). "_randominit" distinguishes this from every "_indomain"/
+# "_crossdomain" run, none of which apply here (there is no SSL source at
+# all).
+RUN_TAG = "step4_full_unfrozen_combined_randominit"
 
 TRAIN_SEED = 42
 VAL_TUPLES_PER_ANCHOR = 4
@@ -189,151 +191,89 @@ SCALE_ESTIMATION_NUM_QUADRUPLES = 200  # only used when ALPHA > 0.0
 SCALE_ESTIMATION_SEED = 42
 
 # -- Model -----------------------------------------------------------------
-# Step 4, Cell A (FROZEN encoder, only the projector/local_projection heads
-# trainable) - the STARTING cell for the Hindi->Bengali cross-domain rung
-# (ICCIT §4.2): characterize how well a Hindi-pretrained-only encoder does
-# on Bengali verification with zero encoder adaptation, before unfreezing
-# stage4 (Cell B) then the full encoder (Cell C) on this same
-# Hindi_data_ssl/fold_0 encoder. Note this is NOT the same measurement as
-# the zero-shot cross-lingual test (roadmap §20/§22) - zero-shot uses a
-# checkpoint already fine-tuned end-to-end on the SOURCE dataset's labels
-# with zero exposure to the target; this run instead trains from the raw
-# Hindi SSL encoder using Bengali's OWN labels, so it is the cross-dataset
-# analogue of the in-domain ladder, not of the zero-shot one.
-# CELL A: frozen (this setting). CELL B: ("stage4",). CELL C: all five
-# below, uncommented - see the RUN_TAG comment above for the matching tag.
-TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ()
+# THIS RUN: Cell C - full unfreeze, ALL five encoder stages trainable, the
+# same capacity as the combined-head headline result this run is being
+# compared against (ICCIT §9.2 Tier 1, run A). No intermediate cells (A/B)
+# needed for this ablation - the theme only needs to be shown to hold at
+# the BEST configuration each dataset actually uses.
+TRAINABLE_ENCODER_STAGES: tuple[str, ...] = ("stem", "stage1", "stage2", "stage3", "stage4")
 PROJECTOR_HIDDEN_DIM = 256
 EMBEDDING_DIM = 256
 NORM_TYPE = "batch"
 
 # Step 4's local/structural branch (`model.local_projection`, a single
-# linear layer - see embedding_model.py). 128 < EMBEDDING_DIM (256)
-# deliberately, given the overfitting risk Step 3a already showed with
-# more trainable capacity on a 115-writer dataset. `None` would omit the
-# local branch entirely (Steps 1-3's architecture).
+# linear layer - see embedding_model.py). THIS RUN keeps it (128, same as
+# every combined-head run) - the random-init control changes the
+# encoder's starting weights only, not the architecture.
 LOCAL_EMBEDDING_DIM: int | None = 128
 LAMBDA_0 = 1.0  # dis = LAMBDA_0 * dis_global + dis_struct (DetailSemNet Eq. 2, lambda_0=1.0 optimal per their Table A4)
 
 # -- Loss --------------------------------------------------------------------
-LOSS_TYPE = "double_margin_combined"  # "dual_triplet" (Step 1) / "double_margin" (Step 2-3) / "double_margin_combined" (Step 4)
+# THIS RUN: "double_margin_combined" - the REAL architecture (local branch
+# included), kept identical to the reported system. RANDOM_INIT above is
+# the only thing that makes this a control rather than a normal Cell C run.
+LOSS_TYPE = "double_margin_combined"  # "dual_triplet" (Step 1) / "double_margin" (Step 2-3) / "double_margin_combined" (Step 4, and this control)
 
 # Only used when LOSS_TYPE == "dual_triplet".
 INTRA_MARGIN = 0.2
 INTER_MARGIN = 0.2
 INTER_LOSS_WEIGHT = 1.0
 
-# Only used when LOSS_TYPE == "double_margin". Chosen by
-# `sweep_margins.py --run_tag step1_baseline_dualtriplet_frozen` on
-# BHSig260_Hindi validation writers (2026-09-03): genuine-genuine pair
-# distances there had median 0.457, negative-pair distances had median
-# 0.961, under Step 1's trained embedding space. Taking both medians as
-# the margins gives a 50%/50% active fraction on each side - half the
-# pairs still produce gradient at the start of training, avoiding Step
-# 1's dead-triplet problem (79%/95% dead by epoch 5) without being so
-# loose the margins are trivially satisfied by an untrained-for-this-loss
-# embedding space. Re-sweep if the dataset, SSL checkpoint, or encoder
-# fine-tuning state changes.
-MARGIN_M = 0.46
-MARGIN_N = 0.96
+# Only used when LOSS_TYPE == "double_margin". Not used by this run
+# (LOSS_TYPE="double_margin_combined" above) - kept for when LOSS_TYPE is
+# switched back to a global-only ablation run.
+MARGIN_M = 0.16
+MARGIN_N = 0.36
+# ORIGINAL (Step 1-checkpoint proxy, pooled encoder - do not reuse either):
+# MARGIN_M = 0.46
+# MARGIN_N = 0.96
 
 # Only used when LOSS_TYPE == "double_margin_combined".
 #
-# HINDI's margins (used for both the Hindi and the first Bengali Cell A/
-# Cell B runs) were 0.34/0.70, from `sweep_margins_combined.py
-# --step3_run_tag step3a_doublemargin_stage4` on BHSig260_Hindi validation
-# writers (2026-09-04), using Step 3a's fine-tuned encoder + a FRESH
-# global projector + a FRESH local projection as the proxy state.
+# PRIOR RUNS' HISTORICAL RECORD (all pretrained-encoder sweeps - none
+# apply to THIS run, kept only for reference): in-domain Hindi 0.34/0.71,
+# in-domain Bengali 0.27/0.53, in-domain CEDAR 0.28/0.53, cross-domain
+# Hindi->Bengali 0.33/0.61, cross-domain Hindi->CEDAR 0.32/0.57 - every
+# one measured against a REAL DenseCL-pretrained encoder, which is exactly
+# what THIS run does not have. Full per-sweep detail in git history / the
+# chat record if ever needed again.
 #
-# BENGALI-SPECIFIC RE-SWEEP (2026-09-06): Bengali has no Step 3a run (it
-# went straight from SSL pretraining to Step 4), so
-# `sweep_margins_combined.py --dataset BHSig260_Bengali
-# --skip_step3_encoder` used the raw SSL-pretrained encoder + FRESH
-# projector + FRESH local projection as the proxy instead - which is
-# actually a more literal match to what this file's real Step 4 run
-# starts from than Hindi's Step-3a-warmed proxy was (RUN_NAME above is
-# always the raw SSL checkpoint, never a Step 3a checkpoint). Result on
-# Bengali/fold_0 validation writers: genuine-pair combined-distance median
-# 0.2685, negative-pair median 0.5254 (49.9%/50.0% active fraction).
-# Rounded to MARGIN_M_COMBINED=0.27, MARGIN_N_COMBINED=0.53. Fixing the
-# margin fixed threshold-transfer stability cleanly but NOT the underlying
-# Hindi-Bengali recognition-quality gap (SS14.7) - keep that nuance in
-# mind before assuming a CEDAR-specific sweep alone will "solve" anything
-# beyond calibration.
+# RANDOM-INIT CONTROL MARGINS (2026-09-10, ICCIT §4.3/§9.1, Tier 1 run B) -
+# a two-stage process, NOT a single sweep, because a random encoder's
+# distance scale is not stable at t=0 the way a pretrained one's is (see
+# below):
 #
-# CEDAR-SPECIFIC SWEEP, POOLED ENCODER (2026-09-06, SUPERSEDED for this
-# in-domain run - see the in-domain sweep just below): CEDAR also has no
-# Step 3a run, so `sweep_margins_combined.py --dataset CEDAR
-# --skip_step3_encoder` (against the POOLED all_data_ssl encoder). Only 5
-# validation writers (1,440 pair records). Result: genuine-pair combined-
-# distance median 0.3342, negative-pair median 0.6692 (50.0%/50.0%
-# active). Rounded to 0.33/0.67 - this was used for the pooled-encoder
-# CEDAR run (results/all_data_ssl/fold_0/CEDAR/step4_finetuned_combined),
-# NOT for the in-domain run below (different encoder, different distance
-# scale - margins do not transfer across SSL runs, same rule as
-# Hindi/Bengali's in-domain re-sweeps, SS16/SS18).
+# STAGE 1 (attempted 2026-09-10, on Kaggle): swept directly against the
+# untrained random encoder - `sweep_margins_combined.py --dataset
+# BHSig260_Hindi --random_init --seed 42` gave genuine-pair median 0.0065,
+# negative-pair median 0.0071 (50.0%/50.0% active). FAILED in practice:
+# by the end of real epoch 1, `train_negative_active_rate` had been 0.0
+# for the ENTIRE epoch (`train_negative_loss` exactly 0.0) - the raw/local
+# feature scale drifted ~5.5x within one epoch (train distances moved to
+# ~0.036/0.039), something a mature pretrained encoder's scale never does,
+# so the t=0 snapshot was stale within a few hundred batches. See the chat
+# record for the full diagnosis (why: `dis_global` is L2-normalized and
+# bounded, but `dis_struct`'s raw dense features are not, and a randomly
+# initialized, fully-unfrozen 5-stage encoder's raw feature scale is far
+# less stable early on than a pretrained one's).
 #
-# CEDAR IN-DOMAIN SWEEP (2026-09-07, SS20 extension): re-swept against the
-# CEDAR-only SSL encoder (`CEDAR_data_ssl/fold_0`, RUN_NAME above), same
-# `--skip_step3_encoder` raw-SSL-encoder proxy convention as Bengali/
-# Hindi's in-domain sweeps. `sweep_margins_combined.py --dataset CEDAR
-# --skip_step3_encoder --ssl_run_name CEDAR_data_ssl/fold_0` - 5 validation
-# writers (still the smallest proxy sample of the three datasets; 1,440
-# pair records). Result: genuine-pair combined-distance median 0.2794,
-# negative-pair median 0.5293 (exactly 50.0%/50.0% active fraction).
-# Rounded to MARGIN_M_COMBINED=0.28, MARGIN_N_COMBINED=0.53 - these are
-# THIS run's margins (Cell A/B/C all use the same values, same reasoning
-# as Bengali/Hindi: the margins are a property of the raw SSL checkpoint's
-# embedding space, identical across cells, only which parameters get
-# gradients differs). As always: watch `positive_active_rate`/
-# `negative_active_rate` in the first 1-2 epochs - only 5 validation
-# writers is a thin proxy sample.
-#
-# IN-DOMAIN HINDI SWEEP (2026-09-06, SS16): re-swept against the NEW
-# Hindi-only SSL encoder (`Hindi_data_ssl/fold_0`, RUN_NAME above) rather
-# than reusing the original 0.34/0.70 (which was swept on the POOLED
-# encoder's Step-3a-fine-tuned proxy - a different model). `sweep_margins_
-# combined.py --dataset BHSig260_Hindi --skip_step3_encoder --ssl_run_name
-# Hindi_data_ssl/fold_0` (Hindi has no Step 3a run built on THIS encoder
-# either, so the same raw-SSL-encoder proxy as Bengali/CEDAR is used here,
-# not the original Hindi sweep's Step-3a-warmed one). 15 validation
-# writers, 4,320 pair records. Result: genuine-pair combined-distance
-# median 0.3402, negative-pair median 0.7129 (exactly 50.0%/50.0% active
-# fraction). Rounded to MARGIN_M_COMBINED=0.34, MARGIN_N_COMBINED=0.71 -
-# notably close to the original pooled-encoder Hindi sweep (0.34/0.70,
-# from a differently-warmed proxy), suggesting Hindi's own distance scale
-# is fairly stable regardless of whether the encoder saw only Hindi or all
-# four datasets during pretraining. Do not read too much into that from
-# margins alone, though - it's a proxy-state observation, not yet a
-# downstream result.
-# CROSS-DOMAIN HINDI->BENGALI SWEEP (ICCIT §4.2, 2026-09-08): margins are
-# a property of BOTH the raw SSL checkpoint's embedding scale AND the
-# target dataset's own distance distribution - neither the in-domain Hindi
-# sweep (0.34/0.71, against BHSig260_Hindi validation pairs) nor the
-# in-domain Bengali sweep (0.32/0.64, against the Bengali-only encoder)
-# transfer here. `sweep_margins_combined.py --dataset BHSig260_Bengali
-# --skip_step3_encoder --ssl_run_name Hindi_data_ssl/fold_0` (Hindi
-# encoder, Bengali validation pairs). 10 validation writers, 2,880 pair
-# records. Result: genuine-pair combined-distance median 0.3250,
-# negative-pair median 0.6096 (exactly 50.0%/50.0% active fraction).
-# Rounded to 0.33/0.61 - SUPERSEDED for this run (CEDAR is now the target,
-# not Bengali - see below), kept only as this pair's own record.
-#
-# CROSS-DOMAIN HINDI->CEDAR SWEEP (ICCIT §4.2, 2026-09-09, third
-# combination): re-swept against CEDAR's own validation pairs -
-# `sweep_margins_combined.py --dataset CEDAR --skip_step3_encoder
-# --ssl_run_name Hindi_data_ssl/fold_0`. Only 5 validation writers (CEDAR's
-# thin proxy pool, same as every other CEDAR sweep in this project), 1,440
-# pair records. Result: genuine-pair combined-distance median 0.3223,
-# negative-pair median 0.5688 (exactly 50.0%/50.0% active fraction).
-# Rounded to MARGIN_M_COMBINED=0.32, MARGIN_N_COMBINED=0.57 - notably
-# tighter negative margin than either Hindi->Bengali (0.61) or the
-# in-domain CEDAR sweep (0.53, different encoder), consistent with CEDAR's
-# own narrower negative-pair distance spread already seen in its in-domain
-# sweep. Watch positive_active_rate/negative_active_rate closely in the
-# first 1-2 epochs given how thin this proxy sample is.
-MARGIN_M_COMBINED = 0.32
-MARGIN_N_COMBINED = 0.57
+# STAGE 2 (DONE 2026-09-10): re-swept against a REAL post-gradient-flow
+# checkpoint - a Kaggle notebook run of this exact config (RANDOM_INIT=
+# True, seed 42, NUM_EPOCHS capped at 1 as a probe, Stage 1's margins used
+# only to get a real checkpoint out, not trusted for training quality)
+# produced `checkpoints/epoch1.pt`, downloaded locally, then
+# `sweep_margins_combined.py --full_checkpoint <path to epoch1.pt>` loaded
+# it in full (encoder + projector + local_projection together, not just
+# the encoder) and measured where the distance distribution had actually
+# settled after one real epoch: genuine-pair median 0.0145, negative-pair
+# median 0.0152 (50.0%/50.0% active, n=1440/2880 pairs) - about 2.2x
+# Stage 1's t=0 values, confirming the drift. These are the margins THIS
+# run actually trains with. `epoch1.pt` itself is now discarded - the
+# real run below starts from a FRESH random init (same seed=42), not a
+# warm start from it, or the "no pretraining at all" control would be
+# contaminated by one epoch of head start.
+MARGIN_M_COMBINED = 0.0145  # STAGE 2 (real) value - genuine-pair P50 against epoch1.pt, see above
+MARGIN_N_COMBINED = 0.0152  # STAGE 2 (real) value - negative-pair P50 against epoch1.pt, see above
 
 # -- Optimizer -----------------------------------------------------------------
 BATCH_SIZE = 8
@@ -436,14 +376,32 @@ def train() -> None:
     val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, drop_last=False)
     print(f"Batches per epoch - train: {len(train_loader)} | val: {len(val_loader)}")
 
-    model = load_downstream_model(
-        RUN_NAME, CHECKPOINT_EPOCH, device,
-        trainable_encoder_stages=TRAINABLE_ENCODER_STAGES,
-        projector_hidden_dim=PROJECTOR_HIDDEN_DIM,
-        embedding_dim=EMBEDDING_DIM,
-        norm_type=NORM_TYPE,
-        local_embedding_dim=LOCAL_EMBEDDING_DIM if LOSS_TYPE == "double_margin_combined" else None,
-    )
+    if RANDOM_INIT:
+        # THE control: no SSL checkpoint loaded anywhere. Seed explicitly
+        # so the encoder's random weights are reproducible - this MUST
+        # match the seed MARGIN_M_COMBINED/MARGIN_N_COMBINED were swept
+        # with (RANDOM_INIT_SEED's own comment above), or the margins were
+        # measured against different random weights than the ones
+        # actually trained here.
+        torch.manual_seed(RANDOM_INIT_SEED)
+        model = load_random_init_downstream_model(
+            trainable_encoder_stages=TRAINABLE_ENCODER_STAGES,
+            projector_hidden_dim=PROJECTOR_HIDDEN_DIM,
+            embedding_dim=EMBEDDING_DIM,
+            norm_type=NORM_TYPE,
+            local_embedding_dim=LOCAL_EMBEDDING_DIM if LOSS_TYPE == "double_margin_combined" else None,
+            device=device,
+        )
+        print(f"Random-init control: encoder seeded with RANDOM_INIT_SEED={RANDOM_INIT_SEED}, no SSL checkpoint loaded.")
+    else:
+        model = load_downstream_model(
+            RUN_NAME, CHECKPOINT_EPOCH, device,
+            trainable_encoder_stages=TRAINABLE_ENCODER_STAGES,
+            projector_hidden_dim=PROJECTOR_HIDDEN_DIM,
+            embedding_dim=EMBEDDING_DIM,
+            norm_type=NORM_TYPE,
+            local_embedding_dim=LOCAL_EMBEDDING_DIM if LOSS_TYPE == "double_margin_combined" else None,
+        )
 
     optimizer = torch.optim.AdamW(
         _get_optimizer_param_groups(

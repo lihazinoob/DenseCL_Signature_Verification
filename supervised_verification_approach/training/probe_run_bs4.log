@@ -1,0 +1,65 @@
+Device: cuda
+Writers - train: 115 | val: 15 | test: 30
+Dataset sizes - train: 8280 | val: 4320
+Batches per epoch - train: 2070 | val: 1080
+No SSL checkpoint provided - encoder left at random initialization.
+Trainable encoder stages:   ('stem', 'stage1', 'stage2', 'stage3', 'stage4')
+Frozen encoder params:      0
+Trainable encoder params:   2,803,744
+Trainable projector params: 131,584
+Trainable local projection params: 32,896 (dim=128)
+Random-init control: encoder seeded with RANDOM_INIT_SEED=42, no SSL checkpoint loaded.
+Run tag: step4_full_unfrozen_combined_randominit
+Results:  D:\Learning_Education_and_Application\Research_work\Signature_Verification_Thesis_Final_Inshallah\DenseCL_approach\supervised_verification_approach\results\random_init_control\fold_0\BHSig260_Hindi\step4_full_unfrozen_combined_randominit
+Batch size: 4 | Head LR: 0.0001 | Encoder LR: 1e-05
+Epochs: 50 (patience 10, min 15) | Loss: double_margin_combined | Alpha: 0.0
+Margins (combined): m=0.0065, n=0.0071 (from sweep_margins_combined.py) | lambda_0=1.0 | local_dim=128
+Checkpoint selection: K-reference validation AUC (K=8, 5 draws/epoch, alpha=0.0) [batched, batch_size=64]
+===== Epoch 1/50 =====
+Train:   0%|                                                               | 0/2070 [00:00<?, ?it/s]Train:   0%|                                                               | 0/2070 [00:01<?, ?it/s]
+Traceback (most recent call last):
+  File "D:\Learning_Education_and_Application\Research_work\Signature_Verification_Thesis_Final_Inshallah\DenseCL_approach\supervised_verification_approach\training\trainer.py", line 534, in <module>
+    train()
+  File "D:\Learning_Education_and_Application\Research_work\Signature_Verification_Thesis_Final_Inshallah\DenseCL_approach\supervised_verification_approach\training\trainer.py", line 511, in train
+    history_df = train_and_validate_model(
+  File "D:\Learning_Education_and_Application\Research_work\Signature_Verification_Thesis_Final_Inshallah\DenseCL_approach\supervised_verification_approach\training\train_validation.py", line 123, in train_and_validate_model
+    train_metrics = run_epoch_fn(
+  File "D:\Learning_Education_and_Application\Research_work\Signature_Verification_Thesis_Final_Inshallah\DenseCL_approach\supervised_verification_approach\training\run_one_epoch_combined.py", line 71, in run_one_epoch_combined
+    dist = combined_distance_batched(
+  File "D:\Learning_Education_and_Application\Research_work\Signature_Verification_Thesis_Final_Inshallah\DenseCL_approach\supervised_verification_approach\matching\combined_distance.py", line 82, in combined_distance_batched
+    dense_b = model.forward_dense(images_b)
+  File "D:\Learning_Education_and_Application\Research_work\Signature_Verification_Thesis_Final_Inshallah\DenseCL_approach\supervised_verification_approach\models\embedding_model.py", line 145, in forward_dense
+    dense = self.encoder(image_tensor, pool=False)  # (B, 256, grid, grid)
+  File "D:\PYTHON SOFTWARE\lib\site-packages\torch\nn\modules\module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "D:\PYTHON SOFTWARE\lib\site-packages\torch\nn\modules\module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "D:\Learning_Education_and_Application\Research_work\Signature_Verification_Thesis_Final_Inshallah\DenseCL_approach\self_supervised_approach\model\encoder.py", line 245, in forward
+    out = self.stage3(out)
+  File "D:\PYTHON SOFTWARE\lib\site-packages\torch\nn\modules\module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "D:\PYTHON SOFTWARE\lib\site-packages\torch\nn\modules\module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "D:\Learning_Education_and_Application\Research_work\Signature_Verification_Thesis_Final_Inshallah\DenseCL_approach\self_supervised_approach\model\encoder.py", line 190, in forward
+    return self.blocks(x)
+  File "D:\PYTHON SOFTWARE\lib\site-packages\torch\nn\modules\module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "D:\PYTHON SOFTWARE\lib\site-packages\torch\nn\modules\module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "D:\PYTHON SOFTWARE\lib\site-packages\torch\nn\modules\container.py", line 244, in forward
+    input = module(input)
+  File "D:\PYTHON SOFTWARE\lib\site-packages\torch\nn\modules\module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "D:\PYTHON SOFTWARE\lib\site-packages\torch\nn\modules\module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "D:\Learning_Education_and_Application\Research_work\Signature_Verification_Thesis_Final_Inshallah\DenseCL_approach\self_supervised_approach\model\encoder.py", line 148, in forward
+    out = self.act1(self.norm1(self.conv1(x)))
+  File "D:\PYTHON SOFTWARE\lib\site-packages\torch\nn\modules\module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "D:\PYTHON SOFTWARE\lib\site-packages\torch\nn\modules\module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "D:\PYTHON SOFTWARE\lib\site-packages\torch\nn\modules\conv.py", line 548, in forward
+    return self._conv_forward(input, self.weight, self.bias)
+  File "D:\PYTHON SOFTWARE\lib\site-packages\torch\nn\modules\conv.py", line 543, in _conv_forward
+    return F.conv2d(
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 4.00 GiB of which 777.70 MiB is free. Of the allocated memory 2.42 GiB is allocated by PyTorch, and 34.26 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
