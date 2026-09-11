@@ -62,7 +62,7 @@ for sub in ("utils", "models", "datasets", "matching", "evaluation"):
     sys.path.insert(0, str(SUPERVISED_DIR / sub))
 
 from writer_splits import DATA_ROOT, get_writer_split  # noqa: E402
-from embedding_model import load_downstream_model  # noqa: E402
+from embedding_model import load_downstream_model, load_random_init_downstream_model  # noqa: E402
 from protocol import (  # noqa: E402
     make_combined_batch_distance_fn,
     make_combined_distance_fn,
@@ -191,7 +191,17 @@ def main() -> None:
     uses_combined_distance = "local_projection.weight" in state_dict
     local_embedding_dim = state_dict["local_projection.weight"].shape[0] if uses_combined_distance else None
 
-    model = load_downstream_model(ssl_run_name, SSL_CHECKPOINT_EPOCH, device, local_embedding_dim=local_embedding_dim)
+    if ssl_run_name.startswith("random_init_control"):
+        # No SSL checkpoint anywhere for this run (ICCIT SS4.3/SS9.1 Tier 1
+        # run B - the random-init control) - the SSL-checkpoint lookup
+        # `load_downstream_model` would otherwise do is pointless work that
+        # fails outright, since its result gets fully overwritten by the
+        # state_dict load right below anyway (same reasoning as
+        # sweep_margins_combined.py's --full_checkpoint / --random_init).
+        # Just build the matching (untrained) architecture directly.
+        model = load_random_init_downstream_model(local_embedding_dim=local_embedding_dim, device=device)
+    else:
+        model = load_downstream_model(ssl_run_name, SSL_CHECKPOINT_EPOCH, device, local_embedding_dim=local_embedding_dim)
     model.load_state_dict(state_dict)
     model.to(device).eval()
     print(f"Checkpoint : {args.checkpoint} from epoch {checkpoint['epoch']} "

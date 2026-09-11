@@ -144,13 +144,16 @@ from protocol import (  # noqa: E402
 # and downstream_supervised_learning_approach.md's K-fold CV section.
 FOLD = "fold_0"
 
-DATASET_NAME = "BHSig260_Hindi"
-# ICCIT §4.3/§9.1/§9.2 Tier 1, run (B) - the RANDOM-INIT CONTROL. Question:
+DATASET_NAME = "BHSig260_Bengali"
+# ICCIT §4.3/§9.1/§9.2 Tier 1, run (B) - the RANDOM-INIT CONTROL, second
+# dataset (Hindi's run is DONE - AUC 0.9548 vs. 0.9911 pretrained,
+# writer-level-bootstrap-confirmed real gap, results.md §10 - this repeats
+# it on Bengali to check the finding isn't a one-dataset fluke). Question:
 # did the DenseCL pretraining do anything at all? Keeps the REAL reported
 # architecture unchanged - combined distance (global + local branch), Cell
 # C (full unfreeze) - identical to
-# results/Hindi_data_ssl/fold_0/BHSig260_Hindi/step4_full_unfrozen_combined_indomain
-# (AUC 0.9911, results.md §1) - the ONLY thing this run changes is
+# results/Bengali_data_ssl/fold_0/BHSig260_Bengali/step4_full_unfrozen_combined_indomain
+# (AUC 0.9902, EER 5.18%) - the ONLY thing this run changes is
 # RANDOM_INIT below: no SSL checkpoint is loaded at all, the encoder
 # starts at random initialization (seeded, RANDOM_INIT_SEED) instead.
 # This is a DIFFERENT axis from §9.2's global-only-head ablation (Tier 1
@@ -168,10 +171,10 @@ RANDOM_INIT_SEED = 42  # seeds the encoder's OWN random weights (not just data s
 # gets its own directory instead of overwriting the previous one. Change
 # this for every new configuration.
 # THIS RUN = Cell C (full unfreeze), combined head (real architecture),
-# random-init encoder, Hindi (ICCIT §4.3's specified dataset for this
-# control). "_randominit" distinguishes this from every "_indomain"/
-# "_crossdomain" run, none of which apply here (there is no SSL source at
-# all).
+# random-init encoder, Bengali (repeating ICCIT §4.3's control - already
+# DONE on Hindi - on a second dataset). "_randominit" distinguishes this
+# from every "_indomain"/"_crossdomain" run, none of which apply here
+# (there is no SSL source at all).
 RUN_TAG = "step4_full_unfrozen_combined_randominit"
 
 TRAIN_SEED = 42
@@ -238,42 +241,41 @@ MARGIN_N = 0.36
 # what THIS run does not have. Full per-sweep detail in git history / the
 # chat record if ever needed again.
 #
-# RANDOM-INIT CONTROL MARGINS (2026-09-10, ICCIT §4.3/§9.1, Tier 1 run B) -
-# a two-stage process, NOT a single sweep, because a random encoder's
-# distance scale is not stable at t=0 the way a pretrained one's is (see
-# below):
+# RANDOM-INIT CONTROL MARGINS - BHSig260_Bengali (2026-09-12, repeating
+# Hindi's already-complete random-init control on a second dataset - ICCIT
+# §4.3/§9.1, Tier 1 run B). Same two-stage process Hindi needed, NOT a
+# single sweep, because a random encoder's distance scale is not stable at
+# t=0 the way a pretrained one's is (see Hindi's record above this run
+# replaced, or the chat record, for the full diagnosis - same mechanism:
+# `dis_global` is L2-normalized/bounded, `dis_struct`'s raw dense features
+# are not, and a randomly initialized, fully-unfrozen 5-stage encoder's
+# raw feature scale is far less stable early on than a pretrained one's).
 #
-# STAGE 1 (attempted 2026-09-10, on Kaggle): swept directly against the
+# STAGE 1 (done on Kaggle, 1-epoch probe only): swept directly against the
 # untrained random encoder - `sweep_margins_combined.py --dataset
-# BHSig260_Hindi --random_init --seed 42` gave genuine-pair median 0.0065,
-# negative-pair median 0.0071 (50.0%/50.0% active). FAILED in practice:
-# by the end of real epoch 1, `train_negative_active_rate` had been 0.0
-# for the ENTIRE epoch (`train_negative_loss` exactly 0.0) - the raw/local
-# feature scale drifted ~5.5x within one epoch (train distances moved to
-# ~0.036/0.039), something a mature pretrained encoder's scale never does,
-# so the t=0 snapshot was stale within a few hundred batches. See the chat
-# record for the full diagnosis (why: `dis_global` is L2-normalized and
-# bounded, but `dis_struct`'s raw dense features are not, and a randomly
-# initialized, fully-unfrozen 5-stage encoder's raw feature scale is far
-# less stable early on than a pretrained one's).
+# BHSig260_Bengali --random_init --seed 42 --device cpu` gave genuine-pair
+# median 0.0061, negative-pair median 0.0068 (50.0%/49.9% active,
+# n=960/1920 pairs). These were the margins the Kaggle notebook's 1-epoch
+# probe run trained with (NUM_EPOCHS capped at 1, purely to get a real
+# checkpoint out, not trusted for training quality) - NOT used below;
+# expected to be stale by epoch 1 exactly like Hindi's were.
 #
-# STAGE 2 (DONE 2026-09-10): re-swept against a REAL post-gradient-flow
-# checkpoint - a Kaggle notebook run of this exact config (RANDOM_INIT=
-# True, seed 42, NUM_EPOCHS capped at 1 as a probe, Stage 1's margins used
-# only to get a real checkpoint out, not trusted for training quality)
-# produced `checkpoints/epoch1.pt`, downloaded locally, then
-# `sweep_margins_combined.py --full_checkpoint <path to epoch1.pt>` loaded
-# it in full (encoder + projector + local_projection together, not just
-# the encoder) and measured where the distance distribution had actually
-# settled after one real epoch: genuine-pair median 0.0145, negative-pair
-# median 0.0152 (50.0%/50.0% active, n=1440/2880 pairs) - about 2.2x
-# Stage 1's t=0 values, confirming the drift. These are the margins THIS
-# run actually trains with. `epoch1.pt` itself is now discarded - the
-# real run below starts from a FRESH random init (same seed=42), not a
-# warm start from it, or the "no pretraining at all" control would be
-# contaminated by one epoch of head start.
-MARGIN_M_COMBINED = 0.0145  # STAGE 2 (real) value - genuine-pair P50 against epoch1.pt, see above
-MARGIN_N_COMBINED = 0.0152  # STAGE 2 (real) value - negative-pair P50 against epoch1.pt, see above
+# STAGE 2 (DONE 2026-09-12): re-swept against the REAL post-gradient-flow
+# checkpoint the probe produced - `checkpoints/epoch1.pt`, downloaded
+# locally, then `sweep_margins_combined.py --dataset BHSig260_Bengali
+# --full_checkpoint <path to epoch1.pt> --device cpu` loaded it in full
+# (encoder + projector + local_projection together, not just the encoder)
+# and measured where the distance distribution had actually settled after
+# one real epoch: genuine-pair median 0.0219, negative-pair median 0.0229
+# (50.0%/50.0% active, n=960/1920 pairs) - about 3.6x/3.4x Stage 1's t=0
+# values, an even bigger drift than Hindi's ~2.2x but the same direction
+# and cause. These are the margins THIS run actually trains with.
+# `epoch1.pt` itself is now discarded - the real run below starts from a
+# FRESH random init (same seed=42), not a warm start from it, or the "no
+# pretraining at all" control would be contaminated by one epoch of head
+# start.
+MARGIN_M_COMBINED = 0.0219  # STAGE 2 (real) value - genuine-pair P50 against Bengali's epoch1.pt, see above
+MARGIN_N_COMBINED = 0.0229  # STAGE 2 (real) value - negative-pair P50 against Bengali's epoch1.pt, see above
 
 # -- Optimizer -----------------------------------------------------------------
 BATCH_SIZE = 8
